@@ -1,127 +1,16 @@
 from sys import exit, argv
 from time import sleep
 
-from lark import Lark
+#from lark import Lark
 from lark.lexer import Token
 from collections import OrderedDict 
 
 from ffpyplayer.player import MediaPlayer
 
+from parser import *
+from compiler import *
+from state import *
 import pygame
-
-game_parser = Lark(r"""
-    start: line+
-    line: debug
-        | define
-        | setting
-
-    name : CNAME
-    value:  CNAME
-          | NUMBER
-          | ESCAPED_STRING 
-    nl: "\n"
-    pvalue: NUMBER "%"
-
-    ?expr: value
-        | "!" expr       -> not
-        | expr "==" expr -> eq
-        | expr "!=" expr -> neq
-        | expr "<" expr  -> lt
-        | expr "<=" expr -> let
-        | expr ">" expr  -> gt
-        | expr ">=" expr -> get
-        | expr "+" expr  -> add
-        | "-" expr       -> minus
-        | value "+"      -> plus
-        | "Random" "(" pvalue ")"
-
-    debug : "debug" "{" [ name ("," name)*] "}"
-    define : "define" name "{" [def ("," def)*] "}"
-    def: name ("," fcall)? 
-       | WS
-
-    setting: "setting" name "{" statements "}"
-    statements: [statement (statement)*]  
-    statement: fcall ";"
-             | goto ";"
-             | ifelse
-             | if
- 
-    goto: "goto" expr
-
-    if: "if" "(" expr ")" ["{" statements "}" | statement] 
-    ifelse: "if" "(" expr ")" ("{" statements "}" | statement) "else" ("{" statements "}" | statement )
- 
-    fcall: name "(" [param ("," param)*] ")"
-    param: expr 
-         | fcall
-
-    %import common.CNAME
-    %import common.NUMBER
-    %import common.ESCAPED_STRING
-    %import common.WS
-    %ignore /\/\/[^\n]*/ 
-    %ignore WS
-    """, start='start')
-
-def compile_debug(d):
-    print("debugging", repr(d.children))
-
-def get_cname(c):
-    return str(c.children[0])
-
-def compile_define(d):
-    global definitions
-    name =  get_cname(d.children[0])
-    definitions[name] = OrderedDict()
-    print("defining", name)
-
-    for c in d.children[1:]:
-        if (type(c.children[0]) == Token):
-            continue
-
-        if(len(c.children) == 1):
-            definitions[name][get_cname(c.children[0])] = 0
-        elif (len(c.children) == 2):
-            #print(c.children[1])
-            definitions[name][get_cname(c.children[0])] = c.children[1]
-        else:
-          assert("invalid define")
-
-def get_statements(s):
-    assert(s.data == "statements")
-    if len(s.children) == 0:
-        return []
-    #print(s.children[0])
-    return s.children
-
-def compile_setting(s):
-    global settings
-    #if "'setting', [Tree('name', [Token('CNAME', 'kIntroTitle" in str(s):
-    #    print(s.pretty())
-    #    print("s0", s.children[0])
-    #    print("s1", get_statements(s.children[1]))
-    #    print(len(   get_statements(s.children[1]) ) )
-    #    assert(False)
-    name =  get_cname(s.children[0])
-    print("adding setting", name)
-    assert(len(s.children) == 2)
-
-    #for c in s.children[1:]:
-    settings[name] = get_statements(s.children[1])
-
-def compile_line(l):
-    if l.data == 'debug':
-        compile_debug(l)
-
-    elif l.data == 'define':
-        compile_define(l)
-
-    elif l.data == 'setting':
-        compile_setting(l)
- 
-    else:
-        raise SyntaxError('Unknown line: %s' % l.data)
 
 def resolve_rect(a, b, c, d):
     a = int(resolve_expr(a))
@@ -137,9 +26,19 @@ def resolve_fcall(fc):
     if (name == "RECT" or name == "CRect"):
         assert(len(fc.children) == 5)  # 4 parameters
         return resolve_rect(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), get_param(fc.children[4]))
- 
+
+def resolve_all(xs):
+    r = []
+    for x in xs:
+        r.append(resolve_expr(x))
+
+    return r
 
 def resolve_expr(e):
+    if (type(e) == str or type(e) == int):
+        # expression already resolved
+        return e
+
     #print(e)
     name = e.data
     if (name == "not"):
@@ -185,10 +84,10 @@ def resolve_expr(e):
 
     elif (name == "lt"):
         assert(len(e.children) == 2)
-        print(e.children)
+        #print(e.children)
         v1 = resolve_expr(e.children[0])
         v2 = resolve_expr(e.children[1])
-        print(v1, v2)
+        #print(v1, v2)
 
         v1 = resolve_variable(v1)
         v2 = resolve_variable(v2)
@@ -203,10 +102,10 @@ def resolve_expr(e):
 
     elif (name == "get"):
         assert(len(e.children) == 2)
-        print(e.children)
+        #print(e.children)
         v1 = resolve_expr(e.children[0])
         v2 = resolve_expr(e.children[1])
-        print(v1, v2)
+        #print(v1, v2)
 
         v1 = resolve_variable(v1)
         v2 = resolve_variable(v2)
@@ -221,10 +120,10 @@ def resolve_expr(e):
 
     elif (name == "gt"):
         assert(len(e.children) == 2)
-        print(e.children)
+        #print(e.children)
         v1 = resolve_expr(e.children[0])
         v2 = resolve_expr(e.children[1])
-        print(v1, v2)
+        #print(v1, v2)
 
         v1 = resolve_variable(v1)
         v2 = resolve_variable(v2)
@@ -238,7 +137,7 @@ def resolve_expr(e):
             return "FALSE" 
  
     elif (name == "expr"):
-        print(e)
+        #print(e)
         assert(len(e.children) == 1) 
         return resolve_expr(e.children[0])
     elif (name == "value"):
@@ -262,7 +161,15 @@ def get_param(p):
 def get_value(p):
     #print(p)
     assert(p.data == "value") 
-    return p.children[0]
+    v = p.children[0]
+    v = str(v)
+    
+    if (v.isnumeric()):
+        return int(v)
+
+    #print("v:", str(v), repr(v))
+    return v
+    
 
 def get_expr(p):
     #print(p)
@@ -290,8 +197,11 @@ def run_sound(e, loops):
     if v == '""':
         pygame.mixer.stop()
     else:
+        pygame.mixer.stop()
+        print("starting sound")
         sound = pygame.mixer.Sound(cdrom_path + convert_path(v))
         sound.play(loops)
+        print("continue executing")
 
 
 def run_mask(m, e, v, drawn):
@@ -300,13 +210,14 @@ def run_mask(m, e, v, drawn):
     v = resolve_expr(v)
 
     global cdrom_path
+    global origin
     global masks
     print("mask", m, e, v)
     bmp = pygame.image.load(cdrom_path + convert_path(m))
     bmp.set_colorkey((0, 255, 0))
     masks.append((bmp, e))
     if drawn:
-        screen.blit(bmp, [0, 0])
+        screen.blit(bmp, [origin[0], origin[1]])
         pygame.display.flip()
 
 def run_bitmap(e, x, y):
@@ -319,16 +230,19 @@ def run_bitmap(e, x, y):
         y = int(y)
 
     global cdrom_path
+    global origin
     v = resolve_expr(e)
     print("bitmap", v, x, y)
     bmp = pygame.image.load(cdrom_path + convert_path(v))
     bmp.set_colorkey((0, 255, 0))
-    screen.blit(bmp, [x, y])
+    screen.blit(bmp, [origin[0] + x, origin[1] + y])
     pygame.display.flip()
 
 def resolve_variable(f):
-    if f.isnumeric():
+    if type(f) == int:
         return f
+
+    assert(not f.isnumeric())
 
     if (f in ["TRUE","FALSE"]):
         return f
@@ -352,7 +266,14 @@ def run_setflag(f, v):
 
     print("setflag", f, v)
 
+def run_restart_game():
+    global current_view_frame
+    global origin
+    current_view_frame = pygame.image.load(cdrom_path + game_frame)
+    origin = [63, 48]
+
 def run_exit(e, r):
+    global origin
     r = resolve_expr(r)
     e = resolve_expr(e)
     #print(definitions["rects"])
@@ -362,7 +283,7 @@ def run_exit(e, r):
         r = resolve_expr(r)
 
     (a, b, c, d) = r
-    exits.append((a, b, c, d, e))
+    exits.append((origin[0] + a, origin[1] + b, origin[0] + c, origin[1] + d, e))
     print("exit", e, r)
 
 def convert_path(p):
@@ -377,13 +298,17 @@ def run_transition(v, e):
     e = resolve_expr(e)
 
     print("play", v)
-    video_to_play = (cdrom_path + convert_path(v), e)
+    if (v != '""'):
+        video_to_play = (cdrom_path + convert_path(v), e)
+    else:
+        pass
     #assert(False)
     #play_video(cdrom_path + convert_path(v), screen)
 
 def run_fcall(fc):
     #print(fc.children)
     global settings
+
     name = get_cname(fc.children[0]) 
     if (name == "goto"):
         assert(len(fc.children) == 2) # 1 parameter
@@ -407,15 +332,15 @@ def run_fcall(fc):
         run_bitmap(get_param(fc.children[1]), x, y)
 
     elif (name == "VSPicture"):
-        assert(len(fc.children) == 2)  # 1 or 3 parameters
+        assert(len(fc.children) == 2)  # 1 parameter
         run_bitmap(get_param(fc.children[1]), 0, 0)
 
     elif (name == "Mask"):
-        assert(len(fc.children) == 4)  # 1 or 3 parameters
+        assert(len(fc.children) == 4)  # 3 parameters
         run_mask(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), False)
 
     elif (name == "MaskDrawn"):
-        assert(len(fc.children) == 4)  # 1 or 3 parameters
+        assert(len(fc.children) == 4)  # 3 parameters
         run_mask(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), True)
  
     elif (name == "Sound"):
@@ -443,8 +368,10 @@ def run_fcall(fc):
 
     elif (name == "Movie"):
         assert(len(fc.children) == 3)  # 2 parameter
-        print("Movie (goto?)") 
-        run_goto(get_param(fc.children[2]))
+        print("Movie (transition?)")
+        #assert(False)
+        run_transition(get_param(fc.children[1]), get_param(fc.children[2]))
+        #run_goto(get_param(fc.children[2]))
  
     elif (name == "Quit"): 
         assert(len(fc.children) == 1) # No parameters
@@ -452,6 +379,7 @@ def run_fcall(fc):
         exit(0)
     elif (name == "RestartGame"): 
         assert(len(fc.children) == 1) # No parameters
+        run_restart_game()
         print("RestarGame (no op for now)") 
 
     elif (name == "PoliceBust"): 
@@ -460,22 +388,42 @@ def run_fcall(fc):
     elif (name == "DossierAdd"): 
         assert(len(fc.children) == 3) # 2 parameters
         print("DossierAdd (no op for now)") 
-  
+
+    elif (name == "Inventory"): 
+        assert(len(fc.children) == 10) # 9 parameters
+        print("Inventory")
+        run_inventory(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), get_param(fc.children[4]), get_param(fc.children[5]))
+ 
+
     else:
         raise SyntaxError('I don\'t know how to exec: %s' % fc)
 
+def run_inventory(b1, v1, v2, e, b2): #a, b, c, d):
+    [b1, v1, v2, e, b2] = resolve_all([b1, v1, v2, e, b2])
+    print("inventory", b1, v1, v2, e, b2) 
+    if v1 != '""':
+        run_setflag(v1, "TRUE")
+
+    if v2 != '""':
+        run_setflag(v2, "TRUE")
+
 def run_ifelse(ie):
     assert(ie.data == "ifelse")
+    assert(len(ie.children) == 3)
+
     v = resolve_expr(ie.children[0])
     v = resolve_variable(v)
     if (v is None):
         print("Uninitialized variable %s" % v)
         assert(False)
-    print("ifelse", repr(v))
-    if (v == "FALSE" or v == 0):
+
+    #v = resolve_expr(v)
+    #print("ifelse", repr(v))
+    assert(type(v) == str or type(v) == int)
+
+    if (v == "FALSE" or v == "0"):
         if (ie.children[2].data) == "statements":
-            for s in ie.children[2].children:
-                run_statement(s)
+            run_statements(ie.children[2])
         elif (ie.children[2].data) == "statement":
             run_statement(ie.children[2])
  
@@ -490,20 +438,33 @@ def run_ifelse(ie):
 
 def run_if(i):
     assert(i.data == "if")
+    assert(len(i.children) == 2)
+
+    #print(i)
     v = resolve_expr(i.children[0])
     v = resolve_variable(v)
     if (v is None):
         print("Uninitialized variable %s" % v)
         assert(False)
 
-    print("if", v) 
+    #v = resolve_expr(v)
+    #print("if", repr(v))
+    assert(type(v) == str or type(v) == int)
 
-    if (v != "FALSE" and v != 0):
+    if (v != "FALSE" and v != "0"):
+        print("TRUE!")
         if (i.children[1].data) == "statements":
-            run_statement(i.children[1].children[0])
+            run_statements(i.children[1])
+            #for s in i.children[1].children:
+            #    run_statement(s)
         elif (i.children[1].data) == "statement":
             run_statement(i.children[1])
  
+def run_statements(ss):
+    assert(ss.data == "statements") 
+    for s in ss.children:
+        print("EXECUTING",s.pretty())
+        run_statement(s)
 
 def run_statement(s):
     s = s.children[0] 
@@ -512,8 +473,10 @@ def run_statement(s):
     if s.data == 'fcall':
         run_fcall(s)
     elif s.data == 'ifelse':
+        #print("if", s.pretty()) 
         run_ifelse(s)
     elif s.data == 'if':
+        #print("if", s.pretty())
         run_if(s)
     elif (s.data == "goto"):
         run_goto(s.children[0])
@@ -528,6 +491,7 @@ def check_for_events():
     global exits
     global masks
     global next_setting
+    global origin
 
     #x,y = pygame.mouse.get_pos()
 
@@ -543,10 +507,17 @@ def check_for_events():
             x,y = event.pos
 
             for (bmp, new_setting) in masks:
+                #if(bmp.get_size() != (640, 480)):
+                #    print(bmp, bmp.get_size())
+                #    assert(False)
                 mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (x >= msize[0] or y >= msize[1]):
+                    continue
+
                 print("mask", mask.get_at((x, y)))
                 if mask.get_at((x, y)) == 1:
-                    screen.blit(bmp, [0, 0])
+                    screen.blit(bmp, [origin[0], origin[1]])
                     pygame.display.flip()
                     next_setting = new_setting
                     masks = []
@@ -559,15 +530,6 @@ def check_for_events():
                         exits = []
                         return True
     return False
-
-cdrom_path = None 
-definitions = OrderedDict()
-masks = []
-next_setting = None
-settings = OrderedDict()
-exits = []
-video_to_play = None
-screen = None
 
 if __name__ == '__main__':
 
@@ -598,9 +560,12 @@ if __name__ == '__main__':
     next_setting = "kIntro" #Movie"
     while True:
 
-        check_for_events()
+        if current_view_frame is not None:
+            screen.blit(current_view_frame, [0, 0])
 
-        if (video_to_play != None):
+        if check_for_events():
+            pass
+        elif (video_to_play != None):
             print("playing", video_to_play)
             filename, next_setting = video_to_play
             player = MediaPlayer(filename)
@@ -618,7 +583,7 @@ if __name__ == '__main__':
                     w, h = img.get_size()
                     surf = pygame.image.fromstring(data, (w, h), "RGB")
                     sleep(val)
-                    screen.blit(surf, [0, 0])
+                    screen.blit(surf, [origin[0], origin[1]])
 
                 # Flip the display
                 pygame.display.flip()
@@ -628,6 +593,7 @@ if __name__ == '__main__':
             s = next_setting
             exits = []
             masks = []
+            video_to_play = None
             next_setting = None
 
             if (s in settings):
