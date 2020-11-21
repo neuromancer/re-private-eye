@@ -11,7 +11,6 @@ game_parser = Lark(r"""
     value:  CNAME
           | NUMBER
           | ESCAPED_STRING 
-    pvalue: NUMBER "%"
 
     ?expr: value
         | "!" expr       -> not
@@ -24,7 +23,7 @@ game_parser = Lark(r"""
         | expr "+" expr  -> add
         | "-" expr       -> minus
         | value "+"      -> plus
-        | "Random" "(" pvalue ")"
+        | "Random" "(" NUMBER "%" ")" -> random
 
     debug : "debug" "{" [ name ("," name)*] "}"
     define : "define" name "{" [def ("," def)*] "}"
