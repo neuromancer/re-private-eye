@@ -63,3 +63,24 @@ def get_statements(s):
     if len(s.children) == 0:
         return []
     return s.children
+
+def get_param(p):
+    assert(p.data == "param") 
+    return p.children[0]
+
+def get_value(p):
+    assert(p.data == "value") 
+    v = p.children[0]
+    v = str(v)
+    
+    if (v.isnumeric()):
+        return int(v)
+
+    #print("v:", str(v), repr(v))
+    return v
+    
+
+def get_expr(p):
+    assert(p.data == "expr") 
+    return p.children[0]
+

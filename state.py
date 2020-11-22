@@ -7,6 +7,7 @@ exits = []
 inventory = []
 masks = []
 next_setting = None
+current_setting = None
 gorigin = [63, 48]
 started = False
 settings = OrderedDict()

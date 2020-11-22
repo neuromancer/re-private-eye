@@ -8,7 +8,7 @@ This project is open for collaboration. If you are interested, please open [an i
 
 ## Current status
 
-Barely playable: the intro, main menus  as well as some of the first scenes (they can be played). However, some important gameplay elements are missing, including:
+Barely playable: the intro, main menus as well as some of the first scenes (they can be played). However, some important gameplay elements are missing, including:
 
 * Save and load games.
 * Dossiers.
@@ -43,6 +43,7 @@ cd demo
 wget "https://archive.org/download/PrivateEye_1020/PVT_DEMO.zip"
 unzip -LL PVT_DEMO.zip
 git clone https://github.com/wfr/unshieldv3
+cd unshieldv3
 qmake .
 make
 cd ..
