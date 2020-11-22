@@ -19,10 +19,11 @@ The pointers pointers used are not the original ones, so playing the game is a l
 
 ### Project dependencies
 - Python 3
+- [lark](https://github.com/lark-parser/lark)
 - [pygame 2](https://www.pygame.org)
 - [FFPyPlayer 4.3.2](https://matham.github.io/ffpyplayer/)
 
-To install the dependencies, just use `pip3 install pygame ffpyplayer --user`.
+To install the dependencies, just use `pip3 install lark pygame ffpyplayer --user`.
 
 ## Playing with the engine
 
