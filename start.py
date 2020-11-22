@@ -480,8 +480,12 @@ def run_fcall(fc):
         print("DossierAdd (no op for now)") 
 
     elif (name == "LoadGame"): 
-        #assert(len(fc.children) == 3) # 2 parameters
+        assert(len(fc.children) == 4) # 3 parameters
         print("LoadGame (no op for now)") 
+
+    elif (name == "SaveGame"): 
+        assert(len(fc.children) == 3) # 2 parameters
+        print("SaveGame (no op for now)") 
 
     elif (name == "Inventory"): 
         assert(len(fc.children) == 10) # 9 parameters
@@ -685,7 +689,7 @@ if __name__ == '__main__':
     pygame.display.set_caption("Private Eye (1996) re-implementation")
 
     data = None
-    if isfile('assets/GAME.DATA'):
+    if isfile('assets/GAME.DAT'):
         with open('assets/GAME.DAT') as f:
             data = f.read()
     
