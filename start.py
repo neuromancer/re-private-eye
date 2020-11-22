@@ -1,4 +1,4 @@
-from os.path import isdir
+from os.path import isdir, isfile, join
 from sys import exit, argv
 from time import sleep
 from random import random
@@ -215,7 +215,7 @@ def run_sound(e, loops):
         pygame.mixer.stop()
     else:
         pygame.mixer.stop()
-        sound = pygame.mixer.Sound(cdrom_path + convert_path(v))
+        sound = pygame.mixer.Sound(join(cdrom_path, convert_path(v)))
         sound.play(loops)
 
 def run_mask(m, e, v, x, y, drawn):
@@ -231,7 +231,7 @@ def run_mask(m, e, v, x, y, drawn):
 
     print("mask", m, e, v, x, y)
 
-    bmp = pygame.image.load(cdrom_path + convert_path(m))
+    bmp = pygame.image.load(join(cdrom_path, convert_path(m)))
     bmp.set_colorkey((0, 255, 0))
 
     if bmp.get_size() == (640, 480):
@@ -259,7 +259,7 @@ def run_bitmap(e, x, y):
 
     v = resolve_expr(e)
     print("bitmap", v, x, y, screen)
-    bmp = pygame.image.load(cdrom_path + convert_path(v))
+    bmp = pygame.image.load(join(cdrom_path, convert_path(v)))
     bmp.set_colorkey((0, 255, 0))
 
     if bmp.get_size() == (640, 480):
@@ -334,12 +334,12 @@ def run_transition(v, e):
     e = resolve_expr(e)
 
     if started:
-        current_view_frame = pygame.image.load(cdrom_path + game_frame)
+        current_view_frame = pygame.image.load(join(cdrom_path, game_frame))
         screen.blit(current_view_frame, [0, 0])
 
     print("play", v)
     if (v != '""'):
-        video_to_play = (cdrom_path + convert_path(v), e)
+        video_to_play = (join(cdrom_path, convert_path(v)), e)
     else:
         assert(next_setting is None)
         next_setting = e 
@@ -358,7 +358,7 @@ def run_fcall(fc):
         run_goto(get_param(fc.children[2])) # this looks like a goto
  
     elif (name == "Timer"):
-        assert(len(fc.children) == 4) # 3 parameters
+        assert(len(fc.children) == 4 or len(fc.children) == 3) # 2 or 3 parameters
         run_timer(get_param(fc.children[1]), get_param(fc.children[2]))
 
     elif (name == "Bitmap"):
@@ -684,8 +684,18 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode([640, 480])
     pygame.display.set_caption("Private Eye (1996) re-implementation")
 
-    with open('assets/GAME.DAT') as f:
-        data = f.read()
+    data = None
+    if isfile('assets/GAME.DATA'):
+        with open('assets/GAME.DAT') as f:
+            data = f.read()
+    
+    if isfile('assets/GAME.TXT'):
+        with open('assets/GAME.TXT') as f:
+            data = f.read()
+
+    if data is None:
+        print("Cannot find full game (assets/GAME.DATA) or demo (assets/GAME.TXT)")
+        exit(-1)
 
     print("Parsing game assets..")
     ls = game_parser.parse(data)

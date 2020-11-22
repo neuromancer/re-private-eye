@@ -24,7 +24,28 @@ The pointers pointers used are not the original ones, so playing the game is a l
 
 To install the dependencies, just use `pip3 install pygame ffpyplayer --user`.
 
-### Running the game
+## Playing with the engine
+
+### Using the full game:
+
 1. Mount/load the CDROM. 
-2. Install the game (you will need something like `wine`). 
+2. Install the game (you can use `wine` or just extract support/assets.z using [unshieldv3](https://github.com/wfr/unshieldv3)).
 3. From the game directory, run `python3 start.py path/to/cdrom`
+
+### Using the demo:
+
+If you don't have the full game, you can still play with this engine using [the free demo](https://archive.org/details/PrivateEye_1020) following these steps:
+
+```
+mkdir demo
+cd demo
+wget "https://archive.org/download/PrivateEye_1020/PVT_DEMO.zip"
+unzip -LL PVT_DEMO.zip
+git clone https://github.com/wfr/unshieldv3
+qmake .
+make
+cd ..
+mkdir assets
+./unshieldv3/unshieldv3 extract support/assets.z assets/
+python ../start.py .
+```
