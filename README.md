@@ -15,7 +15,7 @@ Barely playable: the intro, main menus as well as some of the first scenes (they
 * Diary.
 * Radios.
 
-The pointers pointers used are not the original ones, so playing the game is a litte more difficult than expected.
+Additionally, the mouse pointers used are not the original ones, so playing the game is a litte more difficult than expected.
 
 ### Project dependencies
 - Python 3
@@ -23,19 +23,19 @@ The pointers pointers used are not the original ones, so playing the game is a l
 - [pygame 2](https://www.pygame.org)
 - [FFPyPlayer 4.3.2](https://matham.github.io/ffpyplayer/)
 
-To install the dependencies, just use `pip3 install lark pygame ffpyplayer --user`.
+To install the dependencies, just use `pip3 install lark pygame ffpyplayer --user --upgrade`.
 
 ## Playing with the engine
 
 ### Using the full game:
 
 1. Mount/load the CDROM. 
-2. Install the game (you can use `wine` or just extract support/assets.z using [unshieldv3](https://github.com/wfr/unshieldv3)).
-3. From the game directory, run `python3 start.py path/to/cdrom`
+2. Install the game (you can use `wine` or just extract `support/assets.z` using [unshieldv3](https://github.com/wfr/unshieldv3)).
+3. From the game directory where it was installed, run `python3 start.py path/to/cdrom`
 
 ### Using the demo:
 
-If you don't have the full game, you can still play with this engine using [the free demo](https://archive.org/details/PrivateEye_1020) following these steps:
+If you don't own the full game, you can still play with this engine using [the free demo](https://archive.org/details/PrivateEye_1020) following these steps:
 
 ```
 mkdir demo
