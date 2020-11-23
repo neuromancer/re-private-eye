@@ -3,6 +3,16 @@ from lark.lexer import Token
 
 cdrom_path = None 
 definitions = OrderedDict()
+dossiers = []
+dossier_next_sheet = None
+dossier_previous_sheet = None
+
+dossier_next_suspect = None
+dossier_previous_suspect = None
+
+dossier_current_sheet = None
+dossier_current_suspect = None
+
 exits = []
 inventory = []
 masks = []

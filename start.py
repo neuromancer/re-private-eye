@@ -13,6 +13,11 @@ from interpreter import *
 from state import *
 import pygame
 
+pgv = pygame.__version__
+if len(pgv) < 2 or pgv[:2] != '2.':
+    print("pygame %s was found, but 2.x is required. To upgrade, run: pip3 install pygame --user --upgrade" % pgv)
+    exit(-1)
+
 def run_goto(e):
     global next_setting
     v = resolve_expr(e)
@@ -65,6 +70,101 @@ def run_mask(m, e, v, x, y, drawn):
     if drawn:
         screen.blit(bmp, [x, y])
         pygame.display.flip()
+
+
+def run_dossierchgsheet(b, n, x, y):
+    global cdrom_path
+    global dossiers
+    global dossier_next_sheet
+    global dossier_previous_sheet
+
+    b = resolve_expr(b)
+    n = resolve_expr(n)
+    x = resolve_expr(x)
+    y = resolve_expr(y)
+ 
+    bmp = pygame.image.load(join(cdrom_path, convert_path(b)))
+    bmp.set_colorkey((0, 255, 0))
+
+    if n == 1:
+        dossier_next_sheet = (bmp, x, y)
+    else:
+        dossier_previous_sheet = (bmp, x, y)
+
+    screen.blit(bmp, [x, y])
+    pygame.display.flip()
+
+def run_dossiernextsuspect(b, x, y):
+    global cdrom_path
+    global dossiers
+    global dossier_next_suspect
+
+    b = resolve_expr(b)
+    x = resolve_expr(x)
+    y = resolve_expr(y)
+ 
+    bmp = pygame.image.load(join(cdrom_path, convert_path(b)))
+    bmp.set_colorkey((0, 255, 0))
+
+    dossier_next_suspect = (bmp, x, y)
+
+    screen.blit(bmp, [x, y])
+    pygame.display.flip()
+
+def run_dossierprevsuspect(b, x, y):
+    global cdrom_path
+    global dossiers
+    global dossier_previous_suspect
+
+    b = resolve_expr(b)
+    x = resolve_expr(x)
+    y = resolve_expr(y)
+ 
+    bmp = pygame.image.load(join(cdrom_path, convert_path(b)))
+    bmp.set_colorkey((0, 255, 0))
+
+    dossier_previous_suspect = (bmp, x, y)
+
+    screen.blit(bmp, [x, y])
+    pygame.display.flip()
+
+
+
+def run_dossierbitmap(x, y):
+    global dossiers
+    global dossier_current_sheet
+    global dossier_current_suspect
+
+    x = resolve_expr(x)
+    y = resolve_expr(y)
+
+    assert(dossier_current_sheet is not None)
+    assert(dossier_current_suspect is not None)
+    screen.blit(dossiers[dossier_current_suspect][dossier_current_sheet], [x, y])
+    pygame.display.flip()
+
+def run_dossieradd(b1, b2):
+    global cdrom_path
+    global dossiers
+    global dossier_current_sheet
+    global dossier_current_suspect
+
+    b1 = resolve_expr(b1)
+    b2 = resolve_expr(b2)
+ 
+    bmp1 = pygame.image.load(join(cdrom_path, convert_path(b1)))
+    bmp1.set_colorkey((0, 255, 0))
+
+    if b2 != '""':
+        bmp2 = pygame.image.load(join(cdrom_path, convert_path(b2)))
+        bmp2.set_colorkey((0, 255, 0))
+    else:
+        bmp2 = None
+
+    dossiers.append((bmp1, bmp2))
+    if dossier_current_sheet is None:
+        dossier_current_sheet = 0
+        dossier_current_suspect = 0
 
 def run_bitmap(e, x, y):
     if (type(x) != int):
@@ -289,6 +389,29 @@ def run_fcall(fc):
     elif (name == "DossierAdd"): 
         assert(len(fc.children) == 3) # 2 parameters
         print("DossierAdd (no op for now)") 
+        run_dossieradd(get_param(fc.children[1]), get_param(fc.children[2]))
+
+    elif (name == "DossierChgSheet"):
+        assert(len(fc.children) == 5)  # 4 parameters
+        print("DossierChgSheet")
+        run_dossierchgsheet(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), get_param(fc.children[4])) 
+
+    elif (name == "DossierBitmap"):
+        assert(len(fc.children) == 3)  # 2 parameters
+        print("DossierChgSheet")
+        run_dossierbitmap(get_param(fc.children[1]), get_param(fc.children[2])) 
+
+    elif (name == "DossierPrevSuspect"):
+        assert(len(fc.children) == 4)  # 3 parameters
+        print("DossierPrevSuspect")
+        run_dossierprevsuspect(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3])) 
+
+    elif (name == "DossierNextSuspect"):
+        assert(len(fc.children) == 4)  # 3 parameters
+        print("DossierNextSuspect")
+        run_dossiernextsuspect(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3])) 
+
+
 
     elif (name == "AskSave"): 
         assert(len(fc.children) == 3) # 2 parameters
@@ -396,6 +519,72 @@ def set_cursor(x, y):
     global exits
     global masks
 
+    if dossier_next_sheet is not None:
+        (bmp, ox, oy) = dossier_next_sheet
+        xm = x - ox
+        ym = y - oy
+
+        if xm < 0 or ym < 0:
+            return False
+
+        mask = pygame.mask.from_surface(bmp)
+        msize = mask.get_size()
+        if (xm >= msize[0] or ym >= msize[1]):
+            pass
+        elif mask.get_at((xm, ym)) == 1:
+            #screen.blit(bmp, [ox, oy])
+            #pygame.display.flip()
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+            return
+
+    if dossier_previous_sheet is not None:
+        (bmp, ox, oy) = dossier_previous_sheet
+        xm = x - ox
+        ym = y - oy
+
+        if xm < 0 or ym < 0:
+            return False
+
+        mask = pygame.mask.from_surface(bmp)
+        msize = mask.get_size()
+        if (xm >= msize[0] or ym >= msize[1]):
+            pass
+        elif mask.get_at((xm, ym)) == 1:
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+            return
+
+    if dossier_next_suspect is not None:
+        (bmp, ox, oy) = dossier_next_suspect
+        xm = x - ox
+        ym = y - oy
+
+        if xm < 0 or ym < 0:
+            return False
+
+        mask = pygame.mask.from_surface(bmp)
+        msize = mask.get_size()
+        if (xm >= msize[0] or ym >= msize[1]):
+            pass
+        elif mask.get_at((xm, ym)) == 1:
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+            return
+
+    if dossier_previous_suspect is not None:
+        (bmp, ox, oy) = dossier_previous_suspect
+        xm = x - ox
+        ym = y - oy
+
+        if xm < 0 or ym < 0:
+            return False
+
+        mask = pygame.mask.from_surface(bmp)
+        msize = mask.get_size()
+        if (xm >= msize[0] or ym >= msize[1]):
+            pass
+        elif mask.get_at((xm, ym)) == 1:
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+            return
+
     for (bmp, ox, oy, _) in masks:
         mask = pygame.mask.from_surface(bmp)
         msize = mask.get_size()
@@ -433,6 +622,8 @@ def check_for_events():
     global masks
     global next_setting
     global origin
+    global dossier_current_sheet
+    global dossier_current_suspect
 
     (x,y) = pygame.mouse.get_pos()
     set_cursor(x,y)
@@ -473,7 +664,101 @@ def check_for_events():
                     next_setting = new_setting
                     masks = []
                     return True
-        
+
+            # Dossiers handling
+            if dossier_next_sheet is not None:
+                (bmp, ox, oy) = dossier_next_sheet
+                xm = x - ox
+                ym = y - oy
+
+                if xm < 0 or ym < 0:
+                    return False
+
+                mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (xm >= msize[0] or ym >= msize[1]):
+                    continue
+
+                print("dossier_next_sheet mask", mask.get_at((xm, ym)))
+                nd = dossier_current_sheet + 1
+                if mask.get_at((xm, ym)) == 1:
+                    if nd < len(dossiers[dossier_current_suspect]) and dossiers[dossier_current_suspect][nd] is not None:
+                        dossier_current_sheet = nd
+                        screen.blit(dossiers[dossier_current_suspect][dossier_current_sheet], [ox, oy])
+                        pygame.display.flip()
+                    return False
+
+            if dossier_previous_sheet is not None:
+                (bmp, ox, oy) = dossier_previous_sheet
+                xm = x - ox
+                ym = y - oy
+
+                if xm < 0 or ym < 0:
+                    return False
+
+                mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (xm >= msize[0] or ym >= msize[1]):
+                    continue
+
+                print("dossier_previous_sheet mask", mask.get_at((xm, ym)))
+                nd = dossier_current_sheet - 1
+                if mask.get_at((xm, ym)) == 1:
+                    if nd >= 0 and dossiers[dossier_current_suspect][nd] is not None:
+                        dossier_current_sheet = nd
+                        screen.blit(dossiers[dossier_current_suspect][dossier_current_sheet], [ox, oy])
+                        pygame.display.flip()
+                    return False
+
+
+            if dossier_next_suspect is not None:
+                (bmp, ox, oy) = dossier_next_suspect
+                xm = x - ox
+                ym = y - oy
+
+                if xm < 0 or ym < 0:
+                    return False
+
+                mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (xm >= msize[0] or ym >= msize[1]):
+                    continue
+
+                print("dossier_next_suspect mask", mask.get_at((xm, ym)))
+                nd = dossier_current_suspect + 1
+                if mask.get_at((xm, ym)) == 1:
+                    if nd < len(dossiers):
+                        dossier_current_suspect = nd
+                        dossier_current_sheet = 0
+                        screen.blit(dossiers[dossier_current_suspect][dossier_current_sheet], [ox, oy])
+                        screen.blit(bmp, [ox, oy]) 
+                        pygame.display.flip()
+                    return False
+
+            if dossier_previous_suspect is not None:
+                (bmp, ox, oy) = dossier_previous_suspect
+                xm = x - ox
+                ym = y - oy
+
+                if xm < 0 or ym < 0:
+                    return False
+
+                mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (xm >= msize[0] or ym >= msize[1]):
+                    continue
+
+                print("dossier_next_suspect mask", mask.get_at((xm, ym)))
+                nd = dossier_current_suspect - 1
+                if mask.get_at((xm, ym)) == 1:
+                    if nd >= 0:
+                        dossier_current_suspect = nd
+                        dossier_current_sheet = 0
+                        screen.blit(dossiers[dossier_current_suspect][dossier_current_sheet], [ox, oy])
+                        screen.blit(bmp, [ox, oy]) 
+                        pygame.display.flip()
+                    return False
+  
             if started:
                 x = x - gorigin[0]
                 y = y - gorigin[1]
@@ -564,6 +849,11 @@ if __name__ == '__main__':
             print("CURRENT SETTING:", current_setting)
             exits = []
             masks = []
+            dossier_next_sheet = None
+            dossier_previous_sheet = None
+            dossier_next_suspect = None
+            dossier_previous_suspect = None
+ 
             video_to_play = None
             next_setting = None
 

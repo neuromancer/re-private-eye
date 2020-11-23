@@ -27,12 +27,6 @@ def compile_define(d):
 
 def compile_setting(s):
     global settings
-    #if "'setting', [Tree('name', [Token('CNAME', 'kIntroTitle" in str(s):
-    #    print(s.pretty())
-    #    print("s0", s.children[0])
-    #    print("s1", get_statements(s.children[1]))
-    #    print(len(   get_statements(s.children[1]) ) )
-    #    assert(False)
     name =  get_cname(s.children[0])
     print("adding setting", name)
     assert(len(s.children) == 2)
