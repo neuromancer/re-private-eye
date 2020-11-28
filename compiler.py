@@ -1,6 +1,5 @@
 from collections import OrderedDict 
 
-
 from parser import get_cname, get_statements
 from state import *
 
@@ -31,6 +30,12 @@ def compile_setting(s):
     print("adding setting", name)
     assert(len(s.children) == 2)
     settings[name] = get_statements(s.children[1])
+
+def compile_lines(ls):
+    for l in ls.children:
+        if l.data == 'line':
+            for x in l.children:
+              compile_line(x)
 
 def compile_line(l):
     if l.data == 'debug':
