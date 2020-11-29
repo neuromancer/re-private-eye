@@ -20,113 +20,54 @@ if len(pgv) < 2 or pgv[:2] != '2.':
     print("pygame %s was found, but 2.x is required. To upgrade, run: pip3 install pygame --user --upgrade" % pgv)
     exit(-1)
 
+def render_cursor_hand(mask, x, y):
+    if mask is None:
+        return False
+
+    (bmp, ox, oy) = mask
+    xm = x - ox
+    ym = y - oy
+
+    if xm < 0 or ym < 0:
+        return False
+
+    mask = pygame.mask.from_surface(bmp)
+    msize = mask.get_size()
+    if (xm >= msize[0] or ym >= msize[1]):
+        pass
+    elif mask.get_at((xm, ym)) == 1:
+        pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+        return True
+
+    return False
+
+
 def set_cursor(x, y):
     #global state.exits
     #global state.masks
 
     # save/load masks
-    if state.load_game is not None:
-        (bmp, ox, oy) = state.load_game
-        xm = x - ox
-        ym = y - oy
+    if render_cursor_hand(state.load_game, x, y):
+        return
 
-        if xm < 0 or ym < 0:
-            return False
+    if render_cursor_hand(state.save_game, x, y):
+        return
 
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        if (xm >= msize[0] or ym >= msize[1]):
-            pass
-        elif mask.get_at((xm, ym)) == 1:
-            #screen.blit(bmp, [ox, oy])
-            #pygame.display.flip()
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return True
+    if render_cursor_hand(state.dossier_next_sheet, x, y):
+        return
 
-    # dossier masks
-    if state.dossier_next_sheet is not None:
-        (bmp, ox, oy) = state.dossier_next_sheet
-        xm = x - ox
-        ym = y - oy
+    if render_cursor_hand(state.dossier_previous_sheet, x, y):
+        return
+    
+    if render_cursor_hand(state.dossier_next_suspect, x, y):
+        return
 
-        if xm < 0 or ym < 0:
-            return False
-
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        if (xm >= msize[0] or ym >= msize[1]):
-            pass
-        elif mask.get_at((xm, ym)) == 1:
-            #screen.blit(bmp, [ox, oy])
-            #pygame.display.flip()
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return
-
-    if state.dossier_previous_sheet is not None:
-        (bmp, ox, oy) = state.dossier_previous_sheet
-        xm = x - ox
-        ym = y - oy
-
-        if xm < 0 or ym < 0:
-            return False
-
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        if (xm >= msize[0] or ym >= msize[1]):
-            pass
-        elif mask.get_at((xm, ym)) == 1:
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return
-
-    if state.dossier_next_suspect is not None:
-        (bmp, ox, oy) = state.dossier_next_suspect
-        xm = x - ox
-        ym = y - oy
-
-        if xm < 0 or ym < 0:
-            return False
-
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        if (xm >= msize[0] or ym >= msize[1]):
-            pass
-        elif mask.get_at((xm, ym)) == 1:
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return
-
-    if state.dossier_previous_suspect is not None:
-        (bmp, ox, oy) = state.dossier_previous_suspect
-        xm = x - ox
-        ym = y - oy
-
-        if xm < 0 or ym < 0:
-            return False
-
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        if (xm >= msize[0] or ym >= msize[1]):
-            pass
-        elif mask.get_at((xm, ym)) == 1:
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return
+    if render_cursor_hand(state.dossier_previous_suspect, x, y):
+        return
 
     # general masks
     for (bmp, ox, oy, _) in state.masks:
-        mask = pygame.mask.from_surface(bmp)
-        msize = mask.get_size()
-        xm = x - ox
-        ym = y - oy
-
-        if xm < 0 or ym < 0:
-            continue
-
-        if (xm >= msize[0] or ym >= msize[1]):
-            continue
-
-        if mask.get_at((xm, ym)) == 1:
-            state.screen.blit(bmp, [ox, oy])
-            #pygame.display.flip()
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+        if render_cursor_hand((bmp, ox, oy), x, y):
             return
 
     if state.started:
@@ -144,13 +85,6 @@ def set_cursor(x, y):
 
 
 def check_for_events():
-    #global state.exits
-    #global state.masks
-    #global state.next_setting
-    #global state.origin
-    #global state.dossier_current_sheet
-    #global state.dossier_current_suspect
-
     (x,y) = pygame.mouse.get_pos()
     set_cursor(x,y)
 
