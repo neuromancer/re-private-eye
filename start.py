@@ -1,14 +1,12 @@
-from os.path import isdir, isfile, join
+from os.path import isdir, isfile
 from sys import exit, argv
 from time import sleep
 
-#from lark.lexer import Token
-#from collections import OrderedDict 
-from ffpyplayer.player import MediaPlayer
 import pygame 
 
 import state
 
+from media import play_video, load_bmp
 from savegame import savegame, loadgame
 from parser import game_parser
 from compiler import compile_lines
@@ -43,8 +41,6 @@ def render_cursor_hand(mask, x, y):
 
 
 def set_cursor(x, y):
-    #global state.exits
-    #global state.masks
 
     # save/load masks
     if render_cursor_hand(state.load_game, x, y):
@@ -53,6 +49,7 @@ def set_cursor(x, y):
     if render_cursor_hand(state.save_game, x, y):
         return
 
+    # dossier related masks
     if render_cursor_hand(state.dossier_next_sheet, x, y):
         return
 
@@ -74,6 +71,7 @@ def set_cursor(x, y):
         x = x - state.gorigin[0]
         y = y - state.gorigin[1]
 
+    # exits
     for (xs, ys, xe, ye, _) in state.exits:
         if (x>=xs and x<=xe):
             if (y>=ys and y<=ye):
@@ -117,12 +115,16 @@ def check_for_events():
 
                 print("mask", mask.get_at((xm, ym)))
                 if mask.get_at((xm, ym)) == 1:
+                    oscreen = state.screen.copy()
                     state.screen.blit(bmp, [ox, oy])
+                    pygame.display.flip()
+                    sleep(0.2)
+                    state.screen.blit(oscreen, [0, 0])
                     pygame.display.flip()
                     #if(state.next_setting is not None):
                     #    assert(next_setting == new_setting)
                     state.next_setting = new_setting
-                    state.masks = [] # TODO: check if this is necessary here
+                    #state.masks = [] # TODO: check if this is necessary here
                     return True
 
             # Load/Save game
@@ -311,30 +313,9 @@ if __name__ == '__main__':
         if check_for_events():
             pass
         elif (state.video_to_play != None):
-            print("playing", state.video_to_play)
-            filename, ns = state.video_to_play
-            state.video_to_play = None
-            player = MediaPlayer(filename)
-            val = None
-            while val != 'eof':
-                if check_for_events():
-                    player.close_player()
-                    break
-
-                frame, val = player.get_frame()
-                if val != 'eof' and frame is not None:
-                    img, t = frame
-                    data = bytes(img.to_bytearray()[0])
-                    w, h = img.get_size()
-                    surf = pygame.image.fromstring(data, (w, h), "RGB")
-                    sleep(val)
-                    state.screen.blit(surf, [state.gorigin[0], state.gorigin[1]])
-
-                # Flip the display
-                pygame.display.flip()
-            
-            state.next_setting = ns
-
+            filename, next_setting = state.video_to_play
+            play_video(filename, check_for_events)
+            state.next_setting = next_setting
 
         if state.next_setting != None:
             state.current_setting = state.next_setting

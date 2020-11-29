@@ -8,14 +8,12 @@ from compiler import compile_lines
 from interpreter import resolve_expr, resolve_variable, resolve_all
 
 def run_goto(e):
-    #global state.next_setting
     v = resolve_expr(e)
     print("goto", v, "previous value:", state.next_setting)
     #assert(next_setting is None)
     state.next_setting = v 
 
 def run_timer(e1, e2):
-    #global state.next_setting
     v1 = resolve_expr(e1)
     v2 = resolve_expr(e2)
     print("timer", v1, v2)
@@ -33,8 +31,6 @@ def run_sound(e, loops):
         sound.play(loops)
 
 def run_mask(m, e, v, x, y, drawn):
-    #global state.masks
-    #global state.screen
 
     m = resolve_expr(m)
     e = resolve_expr(e)
@@ -59,7 +55,6 @@ def run_mask(m, e, v, x, y, drawn):
         pygame.display.flip()
 
 def run_loadgame(b):
-    #global state.load_game
 
     b = resolve_expr(b)
 
@@ -72,7 +67,6 @@ def run_loadgame(b):
     pygame.display.flip()
 
 def run_savegame(b):
-    #global state.save_game
 
     b = resolve_expr(b)
 
@@ -85,8 +79,6 @@ def run_savegame(b):
     pygame.display.flip()
 
 def run_dossierchgsheet(b, n, x, y):
-    #global state.dossier_next_sheet
-    #global state.dossier_previous_sheet
 
     b = resolve_expr(b)
     n = resolve_expr(n)
@@ -105,7 +97,6 @@ def run_dossierchgsheet(b, n, x, y):
     pygame.display.flip()
 
 def run_dossiernextsuspect(b, x, y):
-    #global state.dossier_next_suspect
 
     b = resolve_expr(b)
     x = resolve_expr(x)
@@ -120,7 +111,6 @@ def run_dossiernextsuspect(b, x, y):
     pygame.display.flip()
 
 def run_dossierprevsuspect(b, x, y):
-    #global state.dossier_previous_suspect
 
     b = resolve_expr(b)
     x = resolve_expr(x)
@@ -146,23 +136,20 @@ def run_dossierbitmap(x, y):
     pygame.display.flip()
 
 def run_dossieradd(b1, b2):
-    #global state.dossiers
-    #global state.dossier_current_sheet
-    #global state.dossier_current_suspect
 
     b1 = resolve_expr(b1)
     b2 = resolve_expr(b2)
  
-    bmp1 = pygame.image.load(join(state.cdrom_path, convert_path(b1)))
-    bmp1.set_colorkey((0, 255, 0))
+    #bmp1 = pygame.image.load(join(state.cdrom_path, convert_path(b1)))
+    #bmp1.set_colorkey((0, 255, 0))
+    b1 = convert_path(b1)  
 
-    if b2 != '""':
-        bmp2 = pygame.image.load(join(state.cdrom_path, convert_path(b2)))
-        bmp2.set_colorkey((0, 255, 0))
+    if b2 == '""':
+        b2 = convert_path(b2) 
     else:
-        bmp2 = None
+        b2 = None
 
-    state.dossiers.append((bmp1, bmp2))
+    state.dossiers.append(( b1 , b2 ))
     if state.dossier_current_sheet is None:
         state.dossier_current_sheet = 0
         state.dossier_current_suspect = 0
@@ -440,19 +427,29 @@ def run_fcall(fc):
     elif (name == "Inventory"): 
         assert(len(fc.children) == 10) # 9 parameters
         print("Inventory")
-        run_inventory(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), get_param(fc.children[4]), get_param(fc.children[5])) 
+        run_inventory(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]), get_param(fc.children[4]), get_param(fc.children[5]), get_param(fc.children[6]), get_param(fc.children[7]), get_param(fc.children[8]), get_param(fc.children[9]) ) 
 
     else:
         raise SyntaxError('I don\'t know how to exec: %s' % fc)
 
-def run_inventory(b1, v1, v2, e, b2): #a, b, c, d):
-    [b1, v1, v2, e, b2] = resolve_all([b1, v1, v2, e, b2])
-    print("inventory", b1, v1, v2, e, b2) 
+def run_inventory(b1, v1, v2, e, b2, a, b, c, snd):
+
+    [b1, v1, v2, e, b2, snd] = resolve_all([b1, v1, v2, e, b2, snd])
+    print("inventory", b1, v1, v2, e, b2, snd) 
     if v1 != '""':
         run_setflag(v1, "TRUE")
 
     if v2 != '""':
         run_setflag(v2, "TRUE")
+
+    state.inventory.append((convert_path(b1),convert_path(b2)))
+
+    if snd != '""':
+        pygame.mixer.stop()
+        sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(snd)))
+        sound.play()
+
+
 
 def run_ifelse(ie):
     assert(ie.data == "ifelse")

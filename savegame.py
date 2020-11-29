@@ -9,7 +9,7 @@ def savegame():
         game = dict()
         game['variables'] = state.definitions['variables']
         game['inventory'] = state.inventory
-        #game['dossiers'] = state.dossiers 
+        game['dossiers'] = state.dossiers 
         json.dump(game,fp) 
 
 def loadgame():
@@ -17,7 +17,7 @@ def loadgame():
         game = json.load(fp)
         state.definitions['variables'] = game['variables']
         state.inventory = game['inventory'] 
-        #state.dossiers = game['dossiers']
+        state.dossiers = game['dossiers']
         state.started = True
         state.modified = True
         state.next_setting = "kMainDesktop"

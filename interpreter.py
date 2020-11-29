@@ -1,7 +1,7 @@
 from random import random
 
-from parser import *
-from state import *
+from parser import get_cname, get_statements, get_param, get_value
+import state
 
 def resolve_rect(a, b, c, d):
     a = int(resolve_expr(a))
@@ -170,8 +170,8 @@ def resolve_variable(f):
     if (f in ["TRUE","FALSE"]):
         return f
 
-    if (f in definitions["variables"]):
-        return(definitions["variables"][f])
+    if (f in state.definitions["variables"]):
+        return(state.definitions["variables"][f])
     else:
         print("flag %s not found in variable list" % f)
         assert(False)
