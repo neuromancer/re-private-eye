@@ -6,6 +6,7 @@ import state
 from parser import get_cname, get_statements, get_param
 from compiler import compile_lines
 from interpreter import resolve_expr, resolve_variable, resolve_all
+from media import load_bmp
 
 def run_goto(e):
     v = resolve_expr(e)
@@ -132,7 +133,9 @@ def run_dossierbitmap(x, y):
 
     assert(state.dossier_current_sheet is not None)
     assert(state.dossier_current_suspect is not None)
-    state.screen.blit(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet], [x, y])
+    bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet])
+
+    state.screen.blit(bmp, [x, y])
     pygame.display.flip()
 
 def run_dossieradd(b1, b2):
@@ -140,11 +143,9 @@ def run_dossieradd(b1, b2):
     b1 = resolve_expr(b1)
     b2 = resolve_expr(b2)
  
-    #bmp1 = pygame.image.load(join(state.cdrom_path, convert_path(b1)))
-    #bmp1.set_colorkey((0, 255, 0))
     b1 = convert_path(b1)  
 
-    if b2 == '""':
+    if b2 != '""':
         b2 = convert_path(b2) 
     else:
         b2 = None

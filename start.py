@@ -181,7 +181,8 @@ def check_for_events():
                 if mask.get_at((xm, ym)) == 1:
                     if nd < len(state.dossiers[state.dossier_current_suspect]) and state.dossiers[state.dossier_current_suspect][nd] is not None:
                         state.dossier_current_sheet = nd
-                        state.screen.blit(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet], [ox, oy])
+                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet])
+                        state.screen.blit(bmp, [ox, oy])
                         pygame.display.flip()
                     return False
 
@@ -203,7 +204,8 @@ def check_for_events():
                 if mask.get_at((xm, ym)) == 1:
                     if nd >= 0 and state.dossiers[state.dossier_current_suspect][nd] is not None:
                         state.dossier_current_sheet = nd
-                        state.screen.blit(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet], [ox, oy])
+                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
+                        state.screen.blit(bmp, [ox, oy])
                         pygame.display.flip()
                     return False
 
@@ -227,8 +229,8 @@ def check_for_events():
                     if nd < len(state.dossiers):
                         state.dossier_current_suspect = nd
                         state.dossier_current_sheet = 0
-                        state.screen.blit(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet], [ox, oy])
-                        state.screen.blit(bmp, [ox, oy]) 
+                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
+                        state.screen.blit(bmp, [ox, oy])
                         pygame.display.flip()
                     return False
 
@@ -251,8 +253,8 @@ def check_for_events():
                     if nd >= 0:
                         state.dossier_current_suspect = nd
                         state.dossier_current_sheet = 0
-                        state.screen.blit(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet], [ox, oy])
-                        state.screen.blit(bmp, [ox, oy]) 
+                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
+                        state.screen.blit(bmp, [ox, oy])
                         pygame.display.flip()
                     return False
   
@@ -263,10 +265,7 @@ def check_for_events():
             for (xs, ys, xe, ye, new_setting) in state.exits:
                 if (x>=xs and x<=xe):
                     if (y>=ys and y<=ye):
-                        #if next_setting is not None:
-                        #    assert(next_setting == new_setting)
                         state.next_setting = new_setting
-                        state.exits = [] # TODO: check if this is necessary
                         return True
     return False
 

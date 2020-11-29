@@ -1,11 +1,13 @@
 from time import sleep
+from os.path import join
+
 from ffpyplayer.player import MediaPlayer
 import pygame 
 
 import state
 
 def load_bmp(b):
-    bmp = pygame.image.load(join(state.cdrom_path, b1))
+    bmp = pygame.image.load(join(state.cdrom_path, b))
     bmp.set_colorkey((0, 255, 0))
     return bmp 
 
