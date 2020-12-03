@@ -6,7 +6,7 @@ import pygame
 
 import state
 
-from media import play_video, load_bmp
+from media import play_video, load_bmp, scale_point
 from savegame import savegame, loadgame
 from parser import game_parser
 from compiler import compile_lines
@@ -284,7 +284,8 @@ if __name__ == '__main__':
     pygame.init()
 
     # Set up the drawing window
-    state.screen = pygame.display.set_mode([640, 480])
+    state.screen = pygame.display.set_mode((state.height, state.width))#, pygame.FULLSCREEN)
+    state.gorigin = scale_point(0, 0)
     pygame.display.set_caption("Private Eye (1996) re-implementation")
 
     data = None

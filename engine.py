@@ -6,7 +6,7 @@ import state
 from parser import get_cname, get_statements, get_param
 from compiler import compile_lines
 from interpreter import resolve_expr, resolve_variable, resolve_all
-from media import load_bmp
+from media import load_bmp, scale_point
 
 def run_goto(e):
     v = resolve_expr(e)
@@ -40,15 +40,17 @@ def run_mask(m, e, v, x, y, drawn):
     y = resolve_expr(y)
 
     print("mask", m, e, v, x, y)
+    bmp = load_bmp(convert_path(m))
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(m)))
+    #bmp.set_colorkey((0, 255, 0))
 
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(m)))
-    bmp.set_colorkey((0, 255, 0))
-
-    if bmp.get_size() == (640, 480):
+    if bmp.get_size() == (state.height, state.width):
         assert(x == 0 and y == 0)
     else:
         if x == 0 and y == 0 and state.current_setting != "kNotebookDuringGame":
             x,y = state.gorigin
+        else:
+            x,y = scale_point(x,y)
 
     state.masks.append((bmp, x, y, e))
     if drawn:
@@ -58,9 +60,10 @@ def run_mask(m, e, v, x, y, drawn):
 def run_loadgame(b):
 
     b = resolve_expr(b)
-
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(b))
+ 
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
+    #bmp.set_colorkey((0, 255, 0))
 
     state.load_game = (bmp, 0, 0)
 
@@ -70,9 +73,10 @@ def run_loadgame(b):
 def run_savegame(b):
 
     b = resolve_expr(b)
-
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(b))
+ 
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
+    #bmp.set_colorkey((0, 255, 0))
 
     state.save_game = (bmp, 0, 0)
 
@@ -85,9 +89,11 @@ def run_dossierchgsheet(b, n, x, y):
     n = resolve_expr(n)
     x = resolve_expr(x)
     y = resolve_expr(y)
+    x, y = scale_point(x,y) 
  
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(b))
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
+    #bmp.set_colorkey((0, 255, 0))
 
     if n == 1:
         state.dossier_next_sheet = (bmp, x, y)
@@ -102,9 +108,11 @@ def run_dossiernextsuspect(b, x, y):
     b = resolve_expr(b)
     x = resolve_expr(x)
     y = resolve_expr(y)
+    x, y = scale_point(x,y) 
  
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(b))
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
+    #bmp.set_colorkey((0, 255, 0))
 
     state.dossier_next_suspect = (bmp, x, y)
 
@@ -116,9 +124,11 @@ def run_dossierprevsuspect(b, x, y):
     b = resolve_expr(b)
     x = resolve_expr(x)
     y = resolve_expr(y)
+    x, y = scale_point(x,y) 
  
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(b)) 
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
+    #bmp.set_colorkey((0, 255, 0))
 
     state.dossier_previous_suspect = (bmp, x, y)
 
@@ -130,7 +140,8 @@ def run_dossierprevsuspect(b, x, y):
 def run_dossierbitmap(x, y):
     x = resolve_expr(x)
     y = resolve_expr(y)
-
+    x, y = scale_point(x,y) 
+ 
     assert(state.dossier_current_sheet is not None)
     assert(state.dossier_current_suspect is not None)
     bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet])
@@ -166,18 +177,19 @@ def run_bitmap(e, x, y):
 
     v = resolve_expr(e)
     print("bitmap", v, x, y, state.screen)
-    bmp = pygame.image.load(join(state.cdrom_path, convert_path(v)))
-    bmp.set_colorkey((0, 255, 0))
+    bmp = load_bmp(convert_path(v))
+    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(v)))
+    #bmp.set_colorkey((0, 255, 0))
 
-    if bmp.get_size() == (640, 480):
+    if bmp.get_size() == (state.height, state.width):
         assert(x == 0 and y == 0)
-        state.screen.blit(bmp, [0, 0])
     else:
         if x == 0 and y == 0 and state.current_setting != "kNotebookDuringGame":
             x,y = state.gorigin
-        
-        state.screen.blit(bmp, [x, y])
-
+        else:
+            x,y = scale_point(x,y) 
+    
+    state.screen.blit(bmp, [x, y])
     pygame.display.flip()
 
 def run_setflag(f, v):
@@ -196,7 +208,8 @@ def run_restart_game():
     for f in state.definitions["variables"]:
         if f != 'kAlternateGame':
             state.definitions["variables"][f] = 0
- 
+
+    state.gorigin = scale_point(63, 48)
     state.started = True
 
 def run_setmodified(x):
@@ -228,6 +241,9 @@ def run_exit(e, r):
 
     (a, b, c, d) = r
 
+    a, b = scale_point(a, b) 
+    c, d = scale_point(c, d) 
+
     state.exits.append((a, b, c, d, e))
     print("exit", e, r)
 
@@ -244,7 +260,8 @@ def run_transition(v, e):
     e = resolve_expr(e)
 
     if state.started:
-        state.current_view_frame = pygame.image.load(join(state.cdrom_path, state.game_frame))
+        state.current_view_frame = load_bmp(state.game_frame)
+        #state.current_view_frame = pygame.image.load(join(state.cdrom_path, state.game_frame))
         state.screen.blit(state.current_view_frame, [0, 0])
 
     print("play", v)
@@ -449,8 +466,6 @@ def run_inventory(b1, v1, v2, e, b2, a, b, c, snd):
         pygame.mixer.stop()
         sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(snd)))
         sound.play()
-
-
 
 def run_ifelse(ie):
     assert(ie.data == "ifelse")

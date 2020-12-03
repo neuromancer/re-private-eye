@@ -30,12 +30,14 @@ modified = False
 definitions = OrderedDict()
 next_setting = None
 current_setting = None
-gorigin = [63, 48]
+gorigin = None
 started = False
 settings = OrderedDict()
 
 # Media
 
+height = 1024
+width = 768
 cdrom_path = None 
 video_to_play = None
 sound_to_play = None
