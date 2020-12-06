@@ -33,6 +33,8 @@ current_setting = None
 gorigin = None
 started = False
 settings = OrderedDict()
+save_path = None
+save_name = "re-private-eye-game.json" 
 
 # Media
 
@@ -42,5 +44,6 @@ cdrom_path = None
 video_to_play = None
 sound_to_play = None
 screen = None
+font = None
 current_view_frame = None
 game_frame = "inface/general/inface2.bmp"

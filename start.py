@@ -1,6 +1,7 @@
 from os.path import isdir, isfile
 from sys import exit, argv
 from time import sleep
+from pathlib import Path
 
 import pygame 
 
@@ -262,11 +263,21 @@ def check_for_events():
                 x = x - state.gorigin[0]
                 y = y - state.gorigin[1]
 
+            current_exit_size = None
             for (xs, ys, xe, ye, new_setting) in state.exits:
                 if (x>=xs and x<=xe):
                     if (y>=ys and y<=ye):
-                        state.next_setting = new_setting
-                        return True
+                        exit_size = (xs-xe)*(ys-ye)
+                        assert(exit_size > 0)
+                        if current_exit_size is None or exit_size < current_exit_size:
+                            if new_setting == "NULL" or new_setting == 0:
+                                state.next_setting = None
+                            else:
+                                state.next_setting = new_setting
+                            current_exit_size = exit_size
+
+            if current_exit_size is not None:
+                return True
     return False
 
 if __name__ == '__main__':
@@ -282,6 +293,9 @@ if __name__ == '__main__':
         exit(-1)
 
     pygame.init()
+    pygame.font.init() # you have to call this at the start, 
+                   # if you want to use this module.
+    state.font = pygame.font.SysFont(pygame.font.get_default_font(), 70)
 
     # Set up the drawing window
     state.screen = pygame.display.set_mode((state.height, state.width))#, pygame.FULLSCREEN)
@@ -300,6 +314,8 @@ if __name__ == '__main__':
     if data is None:
         print("Cannot find full game (assets/GAME.DATA) or demo (assets/GAME.TXT)")
         exit(-1)
+
+    state.save_path = Path(__file__).parent.absolute() 
 
     print("Parsing game assets..")
     ls = game_parser.parse(data)
