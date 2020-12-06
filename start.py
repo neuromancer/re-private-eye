@@ -40,7 +40,27 @@ def render_cursor_hand(mask, x, y):
 
     return False
 
+def render_dossier():
 
+    (bmp, x, y) = state.dossier_previous_sheet
+    state.screen.blit(bmp, [x, y])
+
+    (bmp, x, y) = state.dossier_next_sheet
+    state.screen.blit(bmp, [x, y])
+
+    csus = state.dossier_current_suspect
+    cshe = state.dossier_current_sheet 
+    bmp = load_bmp(state.dossiers[csus][cshe])
+    state.screen.blit(bmp, [x, y])
+
+    (bmp, x, y) = state.dossier_previous_suspect
+    state.screen.blit(bmp, [x, y])
+
+    (bmp, x, y) = state.dossier_next_suspect
+    state.screen.blit(bmp, [x, y])
+
+    pygame.display.flip()
+ 
 def set_cursor(x, y):
 
     # save/load masks
@@ -68,16 +88,22 @@ def set_cursor(x, y):
         if render_cursor_hand((bmp, ox, oy), x, y):
             return
 
-    if state.started:
-        x = x - state.gorigin[0]
-        y = y - state.gorigin[1]
-
     # exits
-    for (xs, ys, xe, ye, _) in state.exits:
+    current_exit_size = None
+    selected_exit = None
+    for (xs, ys, xe, ye, e) in state.exits:
         if (x>=xs and x<=xe):
             if (y>=ys and y<=ye):
-                pygame.mouse.set_cursor(*pygame.cursors.diamond)
-                return
+                exit_size = (xs-xe)*(ys-ye)
+                #print("matched", new_setting, exit_size)
+                assert(exit_size > 0)
+                if current_exit_size is None or exit_size < current_exit_size:
+                    selected_exit = e
+                    current_exit_size = exit_size
+
+    if selected_exit is not None and selected_exit != "NULL" and selected_exit != 0:
+        pygame.mouse.set_cursor(*pygame.cursors.diamond)
+        return
 
     # default cursor
     pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
@@ -179,12 +205,11 @@ def check_for_events():
 
                 print("dossier_next_sheet mask", mask.get_at((xm, ym)))
                 nd = state.dossier_current_sheet + 1
+                cs = state.dossier_current_suspect 
                 if mask.get_at((xm, ym)) == 1:
-                    if nd < len(state.dossiers[state.dossier_current_suspect]) and state.dossiers[state.dossier_current_suspect][nd] is not None:
+                    if nd < len(state.dossiers[cs]) and state.dossiers[cs][nd] is not None:
                         state.dossier_current_sheet = nd
-                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet])
-                        state.screen.blit(bmp, [ox, oy])
-                        pygame.display.flip()
+                        render_dossier()
                     return False
 
             if state.dossier_previous_sheet is not None:
@@ -201,13 +226,12 @@ def check_for_events():
                     continue
 
                 print("dossier_previous_sheet mask", mask.get_at((xm, ym)))
-                nd = state.dossier_current_sheet - 1
+                pd = state.dossier_current_sheet - 1
+                cs = state.dossier_current_suspect
                 if mask.get_at((xm, ym)) == 1:
-                    if nd >= 0 and state.dossiers[state.dossier_current_suspect][nd] is not None:
-                        state.dossier_current_sheet = nd
-                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
-                        state.screen.blit(bmp, [ox, oy])
-                        pygame.display.flip()
+                    if pd >= 0 and state.dossiers[cs][pd] is not None:
+                        state.dossier_current_sheet = pd
+                        render_dossier()
                     return False
 
 
@@ -225,14 +249,12 @@ def check_for_events():
                     continue
 
                 print("dossier_next_suspect mask", mask.get_at((xm, ym)))
-                nd = state.dossier_current_suspect + 1
+                ns = state.dossier_current_suspect + 1
                 if mask.get_at((xm, ym)) == 1:
                     if nd < len(state.dossiers):
-                        state.dossier_current_suspect = nd
+                        state.dossier_current_suspect = ns
                         state.dossier_current_sheet = 0
-                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
-                        state.screen.blit(bmp, [ox, oy])
-                        pygame.display.flip()
+                        render_dossier() 
                     return False
 
             if state.dossier_previous_suspect is not None:
@@ -249,25 +271,20 @@ def check_for_events():
                     continue
 
                 print("dossier_next_suspect mask", mask.get_at((xm, ym)))
-                nd = state.dossier_current_suspect - 1
+                pd = state.dossier_current_suspect - 1
                 if mask.get_at((xm, ym)) == 1:
-                    if nd >= 0:
-                        state.dossier_current_suspect = nd
+                    if pd >= 0:
+                        state.dossier_current_suspect = pd
                         state.dossier_current_sheet = 0
-                        bmp = load_bmp(state.dossiers[state.dossier_current_suspect][state.dossier_current_sheet]) 
-                        state.screen.blit(bmp, [ox, oy])
-                        pygame.display.flip()
+                        render_dossier()
                     return False
   
-            if state.started:
-                x = x - state.gorigin[0]
-                y = y - state.gorigin[1]
-
             current_exit_size = None
             for (xs, ys, xe, ye, new_setting) in state.exits:
                 if (x>=xs and x<=xe):
                     if (y>=ys and y<=ye):
                         exit_size = (xs-xe)*(ys-ye)
+                        print("matched", new_setting, exit_size)
                         assert(exit_size > 0)
                         if current_exit_size is None or exit_size < current_exit_size:
                             if new_setting == "NULL" or new_setting == 0:
@@ -335,7 +352,7 @@ if __name__ == '__main__':
 
         if state.next_setting != None:
             state.current_setting = state.next_setting
-            print("CURRENT SETTING:", state.current_setting)
+            print("CURRENT SETTING:", state.current_setting, state.mode)
             state.exits = []
             state.masks = []
             state.dossier_next_sheet = None
@@ -354,7 +371,7 @@ if __name__ == '__main__':
                     break
 
                 for st in state.settings[state.current_setting]:
-                    print("EXECUTING",st.pretty())
+                    #print("EXECUTING",st.pretty())
                     run_statement(st)
             else:
                 raise SyntaxError('I can\'t find setting: %s' % state.current_setting)

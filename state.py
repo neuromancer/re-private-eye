@@ -27,6 +27,7 @@ masks = []
 # Settings
 
 modified = False
+mode = 0
 definitions = OrderedDict()
 next_setting = None
 current_setting = None

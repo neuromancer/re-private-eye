@@ -10,13 +10,16 @@ Only the English version of the game is supported. Localized versions (e.g. Span
 
 ## Current status
 
-Barely playable: the intro, main menus as well as some of the first scenes (they can be played). However, some important gameplay elements are missing, including:
+Somehow playable: at least the first scenes can be played, but the game is not completable. Saving and loading a game is implemented, but there is only one slot. However, some important gameplay elements are missing, including:
 
-* Save and load games.
 * Diary.
 * Radios.
 
 Additionally, the mouse pointers used are not the original ones, so playing the game is a litte more difficult than expected.
+
+Finally, this re-implementation adds the following new features:
+
+* Any screen resolution (not only 640x480 as the original implementation).
 
 ### Project dependencies
 - Python 3

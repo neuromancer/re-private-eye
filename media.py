@@ -23,8 +23,6 @@ def load_bmp(b):
 
 def play_video(filename, check_for_events):
     print("playing", filename)
-    #filename, ns = state.video_to_play
-    #state.video_to_play = None
     player = MediaPlayer(filename)
     val = None
     while val != 'eof':

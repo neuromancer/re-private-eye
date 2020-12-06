@@ -11,8 +11,24 @@ from media import load_bmp, scale_point
 def run_goto(e):
     v = resolve_expr(e)
     print("goto", v, "previous value:", state.next_setting)
-    #assert(next_setting is None)
     state.next_setting = v 
+
+def run_chgmode(v, e, x):
+    v = resolve_expr(v)
+    e = resolve_expr(e)
+    if x is not None:
+        x = resolve_expr(x)
+ 
+    print("chgmode", v, e, x)
+    state.next_setting = e
+    state.mode = v
+    if state.mode == 0:
+        state.gorigin = [0, 0]
+    elif state.mode == 1:
+        state.gorigin = state.gorigin = scale_point(63, 48)
+    else:
+        print("mode", state.mode)
+        assert(False)
 
 def run_timer(e1, e2):
     v1 = resolve_expr(e1)
@@ -47,11 +63,12 @@ def run_mask(m, e, v, x, y, drawn):
     if bmp.get_size() == (state.height, state.width):
         assert(x == 0 and y == 0)
     else:
-        if x == 0 and y == 0 and state.current_setting != "kNotebookDuringGame":
+        if x == 0 and y == 0 and state.mode == 1: #and state.current_setting != "kNotebookDuringGame":
             x,y = state.gorigin
         else:
             x,y = scale_point(x,y)
 
+    print("mask (updated)", x, y) 
     state.masks.append((bmp, x, y, e))
     if drawn:
         state.screen.blit(bmp, [x, y])
@@ -92,8 +109,6 @@ def run_dossierchgsheet(b, n, x, y):
     x, y = scale_point(x,y) 
  
     bmp = load_bmp(convert_path(b))
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    #bmp.set_colorkey((0, 255, 0))
 
     if n == 1:
         state.dossier_next_sheet = (bmp, x, y)
@@ -184,7 +199,7 @@ def run_bitmap(e, x, y):
     if bmp.get_size() == (state.height, state.width):
         assert(x == 0 and y == 0)
     else:
-        if x == 0 and y == 0 and state.current_setting != "kNotebookDuringGame":
+        if x == 0 and y == 0 and state.mode == 1: #state.current_setting != "kNotebookDuringGame":
             x,y = state.gorigin
         else:
             x,y = scale_point(x,y) 
@@ -204,13 +219,13 @@ def run_setflag(f, v):
     print("setflag", f, v)
 
 def run_restart_game():
-    #global started
     for f in state.definitions["variables"]:
         if f != 'kAlternateGame':
             state.definitions["variables"][f] = 0
 
+    state.mode = 1
     state.gorigin = scale_point(63, 48)
-    state.started = True
+    #state.started = True
 
 def run_setmodified(x):
     #global modified
@@ -242,7 +257,13 @@ def run_exit(e, r):
     (a, b, c, d) = r
 
     a, b = scale_point(a, b) 
-    c, d = scale_point(c, d) 
+    c, d = scale_point(c, d)
+
+    #if state.started:
+    a = a + state.gorigin[0]
+    b = b + state.gorigin[1]
+    c = c + state.gorigin[0]
+    d = d + state.gorigin[1]
 
     state.exits.append((a, b, c, d, e))
     print("exit", e, r)
@@ -253,13 +274,11 @@ def convert_path(p):
     return p.replace("\\","/")
 
 def run_transition(v, e):
-    #global state.video_to_play
-    #global state.next_setting
 
     v = resolve_expr(v)
     e = resolve_expr(e)
 
-    if state.started:
+    if state.mode == 1:
         state.current_view_frame = load_bmp(state.game_frame)
         #state.current_view_frame = pygame.image.load(join(state.cdrom_path, state.game_frame))
         state.screen.blit(state.current_view_frame, [0, 0])
@@ -281,7 +300,14 @@ def run_fcall(fc):
         
     elif (name == "ChgMode"): 
         assert(len(fc.children) == 3 or len(fc.children) == 4) # 2 or 3 parameter
-        run_goto(get_param(fc.children[2])) # this looks like a goto
+        v = get_param(fc.children[1])
+        e = get_param(fc.children[2])
+        x = None
+
+        if len(fc.children) == 4:
+            x = get_param(fc.children[3])
+
+        run_chgmode(v, e, x) # this looks like a goto
  
     elif (name == "Timer"):
         assert(len(fc.children) == 4 or len(fc.children) == 3) # 2 or 3 parameters
@@ -430,7 +456,6 @@ def run_fcall(fc):
         print("AskSave")
         # No time to ask, let's go for the first option
         run_goto(get_param(fc.children[1]))
-        #state.started = False
 
     elif (name == "LoadGame"): 
         assert(len(fc.children) == 4) # 3 parameters
