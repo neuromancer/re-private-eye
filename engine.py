@@ -25,7 +25,7 @@ def run_chgmode(v, e, x):
     if state.mode == 0:
         state.gorigin = [0, 0]
     elif state.mode == 1:
-        state.gorigin = state.gorigin = scale_point(63, 48)
+        state.gorigin = scale_point(63, 48)
     else:
         print("mode", state.mode)
         assert(False)
@@ -47,29 +47,24 @@ def run_sound(e, loops):
         sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(v)))
         sound.play(loops)
 
-def run_mask(m, e, v, x, y, drawn):
+def run_mask(m, e, c, x, y, drawn):
 
     m = resolve_expr(m)
     e = resolve_expr(e)
-    v = resolve_expr(v)
+    c = resolve_expr(c)
     x = resolve_expr(x)
     y = resolve_expr(y)
 
-    print("mask", m, e, v, x, y)
+    print("mask", m, e, c, x, y)
     bmp = load_bmp(convert_path(m))
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(m)))
-    #bmp.set_colorkey((0, 255, 0))
 
-    if bmp.get_size() == (state.height, state.width):
-        assert(x == 0 and y == 0)
+    if state.mode == 1:
+        x,y = state.gorigin
     else:
-        if x == 0 and y == 0 and state.mode == 1: #and state.current_setting != "kNotebookDuringGame":
-            x,y = state.gorigin
-        else:
-            x,y = scale_point(x,y)
+        x,y = scale_point(x,y)
 
     print("mask (updated)", x, y) 
-    state.masks.append((bmp, x, y, e))
+    state.masks.append((bmp, x, y, e, c))
     if drawn:
         state.screen.blit(bmp, [x, y])
         pygame.display.flip()
@@ -78,10 +73,6 @@ def run_loadgame(b):
 
     b = resolve_expr(b)
     bmp = load_bmp(convert_path(b))
- 
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    #bmp.set_colorkey((0, 255, 0))
-
     state.load_game = (bmp, 0, 0)
 
     state.screen.blit(bmp, [0, 0])
@@ -91,10 +82,6 @@ def run_savegame(b):
 
     b = resolve_expr(b)
     bmp = load_bmp(convert_path(b))
- 
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    #bmp.set_colorkey((0, 255, 0))
-
     state.save_game = (bmp, 0, 0)
 
     state.screen.blit(bmp, [0, 0])
@@ -126,9 +113,6 @@ def run_dossiernextsuspect(b, x, y):
     x, y = scale_point(x,y) 
  
     bmp = load_bmp(convert_path(b))
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    #bmp.set_colorkey((0, 255, 0))
-
     state.dossier_next_suspect = (bmp, x, y)
 
     state.screen.blit(bmp, [x, y])
@@ -142,9 +126,6 @@ def run_dossierprevsuspect(b, x, y):
     x, y = scale_point(x,y) 
  
     bmp = load_bmp(convert_path(b)) 
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
-    #bmp.set_colorkey((0, 255, 0))
-
     state.dossier_previous_suspect = (bmp, x, y)
 
     state.screen.blit(bmp, [x, y])
@@ -193,16 +174,11 @@ def run_bitmap(e, x, y):
     v = resolve_expr(e)
     print("bitmap", v, x, y, state.screen)
     bmp = load_bmp(convert_path(v))
-    #bmp = pygame.image.load(join(state.cdrom_path, convert_path(v)))
-    #bmp.set_colorkey((0, 255, 0))
 
-    if bmp.get_size() == (state.height, state.width):
-        assert(x == 0 and y == 0)
+    if state.mode == 1:
+        x,y = state.gorigin
     else:
-        if x == 0 and y == 0 and state.mode == 1: #state.current_setting != "kNotebookDuringGame":
-            x,y = state.gorigin
-        else:
-            x,y = scale_point(x,y) 
+        x,y = scale_point(x,y) 
     
     state.screen.blit(bmp, [x, y])
     pygame.display.flip()
@@ -223,12 +199,10 @@ def run_restart_game():
         if f != 'kAlternateGame':
             state.definitions["variables"][f] = 0
 
-    state.mode = 1
-    state.gorigin = scale_point(63, 48)
-    #state.started = True
+    #state.mode = 1
+    #state.gorigin = scale_point(63, 48)
 
 def run_setmodified(x):
-    #global modified
 
     x = resolve_expr(x)
     x = resolve_variable(x)
@@ -247,9 +221,11 @@ def run_viewscreen(x, y):
     x = resolve_expr(x)
     y = resolve_expr(y)
 
-def run_exit(e, r):
+def run_exit(e, x, r):
     r = resolve_expr(r)
+    x = resolve_expr(x) 
     e = resolve_expr(e)
+
     if (r in state.definitions["rects"]):
         r = state.definitions["rects"][r]
         r = resolve_expr(r)
@@ -259,13 +235,12 @@ def run_exit(e, r):
     a, b = scale_point(a, b) 
     c, d = scale_point(c, d)
 
-    #if state.started:
     a = a + state.gorigin[0]
     b = b + state.gorigin[1]
     c = c + state.gorigin[0]
     d = d + state.gorigin[1]
 
-    state.exits.append((a, b, c, d, e))
+    state.exits.append((a, b, c, d, e, x))
     print("exit", e, r)
 
 def convert_path(p):
@@ -280,7 +255,6 @@ def run_transition(v, e):
 
     if state.mode == 1:
         state.current_view_frame = load_bmp(state.game_frame)
-        #state.current_view_frame = pygame.image.load(join(state.cdrom_path, state.game_frame))
         state.screen.blit(state.current_view_frame, [0, 0])
 
     print("play", v)
@@ -395,7 +369,7 @@ def run_fcall(fc):
 
     elif (name == "Exit"):
         assert(len(fc.children) == 4)  # 3 parameters
-        run_exit(get_param(fc.children[1]), get_param(fc.children[3]))
+        run_exit(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3]))
 
     elif (name == "SetFlag"):
         assert(len(fc.children) == 3)  # 2 parameters

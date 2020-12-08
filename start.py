@@ -12,6 +12,7 @@ from savegame import savegame, loadgame
 from parser import game_parser
 from compiler import compile_lines
 from engine import run_statement
+from cursor import load_cursors
 
 pgv = pygame.__version__
 
@@ -19,8 +20,12 @@ if len(pgv) < 2 or pgv[:2] != '2.':
     print("pygame %s was found, but 2.x is required. To upgrade, run: pip3 install pygame --user --upgrade" % pgv)
     exit(-1)
 
-def render_cursor_hand(mask, x, y):
+def render_cursor_hand(mask, x, y, c):
+    #print(c)
     if mask is None:
+        return False
+
+    if c == "NULL" or c == 0:
         return False
 
     (bmp, ox, oy) = mask
@@ -35,7 +40,8 @@ def render_cursor_hand(mask, x, y):
     if (xm >= msize[0] or ym >= msize[1]):
         pass
     elif mask.get_at((xm, ym)) == 1:
-        pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+        pygame.mouse.set_cursor(*state.cursors[c])
+
         return True
 
     return False
@@ -64,34 +70,35 @@ def render_dossier():
 def set_cursor(x, y):
 
     # save/load masks
-    if render_cursor_hand(state.load_game, x, y):
+    if render_cursor_hand(state.load_game, x, y, "kExit"):
         return
 
-    if render_cursor_hand(state.save_game, x, y):
+    if render_cursor_hand(state.save_game, x, y, "kExit"):
         return
 
     # dossier related masks
-    if render_cursor_hand(state.dossier_next_sheet, x, y):
+    if render_cursor_hand(state.dossier_next_sheet, x, y, "kExit"):
         return
 
-    if render_cursor_hand(state.dossier_previous_sheet, x, y):
+    if render_cursor_hand(state.dossier_previous_sheet, x, y, "kExit"):
         return
     
-    if render_cursor_hand(state.dossier_next_suspect, x, y):
+    if render_cursor_hand(state.dossier_next_suspect, x, y, "kExit"):
         return
 
-    if render_cursor_hand(state.dossier_previous_suspect, x, y):
+    if render_cursor_hand(state.dossier_previous_suspect, x, y, "kExit"):
         return
 
     # general masks
-    for (bmp, ox, oy, _) in state.masks:
-        if render_cursor_hand((bmp, ox, oy), x, y):
+    for (bmp, ox, oy, _, c) in state.masks:
+        if render_cursor_hand((bmp, ox, oy), x, y, c):
             return
 
     # exits
     current_exit_size = None
     selected_exit = None
-    for (xs, ys, xe, ye, e) in state.exits:
+    selected_cursor = None
+    for (xs, ys, xe, ye, e, c) in state.exits:
         if (x>=xs and x<=xe):
             if (y>=ys and y<=ye):
                 exit_size = (xs-xe)*(ys-ye)
@@ -99,10 +106,12 @@ def set_cursor(x, y):
                 assert(exit_size > 0)
                 if current_exit_size is None or exit_size < current_exit_size:
                     selected_exit = e
+                    selected_cursor = c
                     current_exit_size = exit_size
 
     if selected_exit is not None and selected_exit != "NULL" and selected_exit != 0:
-        pygame.mouse.set_cursor(*pygame.cursors.diamond)
+        if c != "NULL" and c != 0:
+            pygame.mouse.set_cursor(*state.cursors[c])
         return
 
     # default cursor
@@ -128,7 +137,7 @@ def check_for_events():
             x,y = event.pos
 
             # General masks
-            for (bmp, ox, oy, new_setting) in state.masks:
+            for (bmp, ox, oy, new_setting, _) in state.masks:
                 xm = x - ox
                 ym = y - oy
 
@@ -148,10 +157,7 @@ def check_for_events():
                     sleep(0.2)
                     state.screen.blit(oscreen, [0, 0])
                     pygame.display.flip()
-                    #if(state.next_setting is not None):
-                    #    assert(next_setting == new_setting)
                     state.next_setting = new_setting
-                    #state.masks = [] # TODO: check if this is necessary here
                     return True
 
             # Load/Save game
@@ -280,7 +286,7 @@ def check_for_events():
                     return False
   
             current_exit_size = None
-            for (xs, ys, xe, ye, new_setting) in state.exits:
+            for (xs, ys, xe, ye, new_setting, _) in state.exits:
                 if (x>=xs and x<=xe):
                     if (y>=ys and y<=ye):
                         exit_size = (xs-xe)*(ys-ye)
@@ -309,14 +315,15 @@ if __name__ == '__main__':
         print(state.cdrom_path, "does not exists")
         exit(-1)
 
+   
+    #assert(0)
     pygame.init()
     pygame.font.init() # you have to call this at the start, 
-                   # if you want to use this module.
     state.font = pygame.font.SysFont(pygame.font.get_default_font(), 70)
 
     # Set up the drawing window
     state.screen = pygame.display.set_mode((state.height, state.width))#, pygame.FULLSCREEN)
-    state.gorigin = scale_point(0, 0)
+    state.gorigin = [0, 0]
     pygame.display.set_caption("Private Eye (1996) re-implementation")
 
     data = None
@@ -334,13 +341,15 @@ if __name__ == '__main__':
 
     state.save_path = Path(__file__).parent.absolute() 
 
+    state.cursors = load_cursors()
+
     print("Parsing game assets..")
     ls = game_parser.parse(data)
     print("Compiling assets..")
     compile_lines(ls)
 
     print("Executing game..")
-    state.next_setting = "kIntro" #Movie"
+    state.next_setting = "kIntro"
     while True:
 
         if check_for_events():

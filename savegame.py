@@ -11,6 +11,7 @@ def savegame():
     if not state.modified:
         return
 
+    assert(state.mode == 0)
     oscreen = state.screen.copy()
     bmp = state.font.render('Saving..', False, (0, 200, 255))
     state.screen.blit(bmp, [(state.height-bmp.get_size()[0])/2., (state.width-bmp.get_size()[1])/2.])
@@ -60,7 +61,5 @@ def loadgame():
         state.dossier_current_sheet = game['dossier_current_sheet']
         state.dossier_current_suspect = game['dossier_current_suspect']
 
-        state.started = True
         state.modified = True
-        state.gorigin = scale_point(63, 48)
         state.next_setting = "kMainDesktop"
