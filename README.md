@@ -6,19 +6,19 @@ This open-source project aims to be a modern engine re-implementation for ["Priv
 
 This project is open for collaboration. If you are interested, please open [an issue](https://github.com/neuromancer/re-private-eye/issues) about it.
 
-Only the English version of the game is supported. Localized versions (e.g. Spanish, French, etc) have game assets in a binarized format that it is not so easy to parse. However, if you own the English version and some localized version, you can still play installing the english one but then using the CD with your localized version. 
+**Only the English version of the game is supported**. Localized versions (e.g. Spanish, French, etc) have game assets in a binarized format that it is not so easy to parse. However, if you own the English version and some localized version, you can still play installing the english one but then using the CD with your localized version. 
 
 ## Current status
 
-Somehow playable: at least the first scenes can be played, but the game is not completable. Saving and loading a game is implemented, but there is only one slot. However, some important gameplay elements are missing, including:
+Somehow playable: at least the first scenes can be played, but (most likely) the game is not completable. Saving and loading a game is implemented, but there is only one slot. However, some important gameplay elements are incomplete:
 
-* Diary.
-* Radios.
-
-Additionally, the mouse pointers used are not the original ones, so playing the game is a litte more difficult than expected.
+* Inventory
+* Diary
+* Radios
 
 Finally, this re-implementation adds the following new features:
 
+* Crossplatform support!
 * Any screen resolution (not only 640x480 as the original implementation).
 
 ### Project dependencies
