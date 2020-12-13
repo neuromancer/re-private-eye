@@ -6,12 +6,17 @@ import pygame
 
 import state
 
+def convert_path(p):
+    p = p.lower()
+    p = p.replace('"','')
+    return p.replace("\\","/")
+
 def scale_point(x, y):
     return (int(x * state.height  / 640.) , int(y * state.width / 480.))
 
 def load_bmp(b):
 
-    bmp = pygame.image.load(join(state.cdrom_path, b))
+    bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
     bmp.set_colorkey((0, 255, 0))
     h,w = bmp.get_size() 
     if (h,w) == (640, 480):
@@ -22,6 +27,7 @@ def load_bmp(b):
     return bmp 
 
 def play_video(filename, check_for_events):
+    filename = join(state.cdrom_path, convert_path(filename))
     print("playing", filename)
     player = MediaPlayer(filename)
     val = None
@@ -43,4 +49,12 @@ def play_video(filename, check_for_events):
 
         # Flip the display
         pygame.display.flip()
- 
+
+def play_sound(f, l):
+    print("playing", f)
+    if f == '""':
+        pygame.mixer.stop()
+    else:
+        pygame.mixer.stop()
+        sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(f)))
+        sound.play(l)

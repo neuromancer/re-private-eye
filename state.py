@@ -23,6 +23,15 @@ save_game = None
 exits = []
 inventory = []
 masks = []
+sareas = []
+
+# Sounds
+
+sounds = dict()
+police_radio_path =  "inface/radio/police/"
+am_radio_path =  "inface/radio/comm_/"
+phone_path =  "inface/telephone/"
+phone_sound = "phone.wav" 
 
 # Settings
 

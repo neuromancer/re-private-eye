@@ -2,16 +2,17 @@ from os.path import isdir, isfile
 from sys import exit, argv
 from time import sleep
 from pathlib import Path
+from random import choice
 
 import pygame 
 
 import state
 
-from media import play_video, load_bmp, scale_point
+from media import play_video, play_sound, load_bmp, scale_point
 from savegame import savegame, loadgame
 from parser import game_parser
 from compiler import compile_lines
-from engine import run_statement
+from engine import run_statement, run_setflag
 from cursor import load_cursors
 
 pgv = pygame.__version__
@@ -89,8 +90,13 @@ def set_cursor(x, y):
     if render_cursor_hand(state.dossier_previous_suspect, x, y, "kExit"):
         return
 
+    # sound areas
+    for (bmp, _) in state.sareas:
+        if render_cursor_hand((bmp, 0, 0), x, y, "kExit"):
+            return
+
     # general masks
-    for (bmp, ox, oy, _, c) in state.masks:
+    for (bmp, ox, oy, _, _, c) in state.masks:
         if render_cursor_hand((bmp, ox, oy), x, y, c):
             return
 
@@ -111,7 +117,7 @@ def set_cursor(x, y):
 
     if selected_exit is not None and selected_exit != "NULL" and selected_exit != 0:
         if c != "NULL" and c != 0:
-            pygame.mouse.set_cursor(*state.cursors[c])
+            pygame.mouse.set_cursor(*state.cursors[selected_cursor])
         return
 
     # default cursor
@@ -137,7 +143,7 @@ def check_for_events():
             x,y = event.pos
 
             # General masks
-            for (bmp, ox, oy, new_setting, _) in state.masks:
+            for (bmp, ox, oy, new_setting, v, _) in state.masks:
                 xm = x - ox
                 ym = y - oy
 
@@ -157,8 +163,45 @@ def check_for_events():
                     sleep(0.2)
                     state.screen.blit(oscreen, [0, 0])
                     pygame.display.flip()
-                    state.next_setting = new_setting
+                    if new_setting != "NULL" and new_setting != 0:
+                        assert(new_setting in state.settings)
+                        state.next_setting = new_setting
+                    if v != "NULL" and v != 0:
+                        assert(v in state.definitions['variables'])
+                        run_setflag(v, "TRUE")
+
                     return True
+
+            # Sound Areas
+            for (bmp, s) in state.sareas:
+                xm = x 
+                ym = y
+
+                mask = pygame.mask.from_surface(bmp)
+                msize = mask.get_size()
+                if (xm >= msize[0] or ym >= msize[1]):
+                    continue
+
+                print("sound area", mask.get_at((xm, ym)))
+                if mask.get_at((xm, ym)) == 1:
+                    if s == "kPoliceRadio":
+                        s = choice(state.sounds["kPoliceRadio"])
+                        filename = state.police_radio_path + s
+                        play_sound(filename, 0) 
+                    elif s == "kAMRadio":
+                        s = choice(state.sounds["kAMRadio"])
+                        filename = state.am_radio_path + s
+                        play_sound(filename, 0)
+                    elif s == "kPhone":
+                        pass
+                    else:
+                        print("Invalid sound added")
+                        assert(False)
+
+                    return True
+
+
+
 
             # Load/Save game
             if state.save_game is not None:
@@ -257,7 +300,7 @@ def check_for_events():
                 print("dossier_next_suspect mask", mask.get_at((xm, ym)))
                 ns = state.dossier_current_suspect + 1
                 if mask.get_at((xm, ym)) == 1:
-                    if nd < len(state.dossiers):
+                    if ns < len(state.dossiers):
                         state.dossier_current_suspect = ns
                         state.dossier_current_sheet = 0
                         render_dossier() 
@@ -290,7 +333,7 @@ def check_for_events():
                 if (x>=xs and x<=xe):
                     if (y>=ys and y<=ye):
                         exit_size = (xs-xe)*(ys-ye)
-                        print("matched", new_setting, exit_size)
+                        #print("matched", new_setting, exit_size)
                         assert(exit_size > 0)
                         if current_exit_size is None or exit_size < current_exit_size:
                             if new_setting == "NULL" or new_setting == 0:
@@ -364,6 +407,7 @@ if __name__ == '__main__':
             print("CURRENT SETTING:", state.current_setting, state.mode)
             state.exits = []
             state.masks = []
+            state.sareas = []
             state.dossier_next_sheet = None
             state.dossier_previous_sheet = None
             state.dossier_next_suspect = None

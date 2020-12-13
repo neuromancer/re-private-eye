@@ -6,7 +6,7 @@ import state
 from parser import get_cname, get_statements, get_param
 from compiler import compile_lines
 from interpreter import resolve_expr, resolve_variable, resolve_all
-from media import load_bmp, scale_point
+from media import load_bmp, play_sound, scale_point
 
 def run_goto(e):
     v = resolve_expr(e)
@@ -40,12 +40,7 @@ def run_timer(e1, e2):
 def run_sound(e, loops):
     v = resolve_expr(e)
     print("sound", v)
-    if v == '""':
-        pygame.mixer.stop()
-    else:
-        pygame.mixer.stop()
-        sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(v)))
-        sound.play(loops)
+    play_sound(v, loops)
 
 def run_mask(m, e, c, x, y, drawn):
 
@@ -56,7 +51,7 @@ def run_mask(m, e, c, x, y, drawn):
     y = resolve_expr(y)
 
     print("mask", m, e, c, x, y)
-    bmp = load_bmp(convert_path(m))
+    bmp = load_bmp(m)
 
     if state.mode == 1:
         x,y = state.gorigin
@@ -64,15 +59,39 @@ def run_mask(m, e, c, x, y, drawn):
         x,y = scale_point(x,y)
 
     print("mask (updated)", x, y) 
-    state.masks.append((bmp, x, y, e, c))
+    state.masks.append((bmp, x, y, e, "NULL", c))
     if drawn:
         state.screen.blit(bmp, [x, y])
         pygame.display.flip()
 
+def run_soundarea(m, s):
+
+    m = resolve_expr(m)
+    s = resolve_expr(s)
+
+    print("soundarea", m, s)
+    bmp = load_bmp(m)
+
+    state.sareas.append((bmp, s))
+    state.screen.blit(bmp, [0, 0])
+    pygame.display.flip()
+
+def add_sound(s, t):
+
+    if t not in state.sounds:
+        state.sounds[t] = []
+
+    s = resolve_expr(s).replace('"','')
+    if s == '':
+        return
+    s = s + ".wav" 
+    print("add_sound", s, t)
+    state.sounds[t].append(s)
+
 def run_loadgame(b):
 
     b = resolve_expr(b)
-    bmp = load_bmp(convert_path(b))
+    bmp = load_bmp(b)
     state.load_game = (bmp, 0, 0)
 
     state.screen.blit(bmp, [0, 0])
@@ -81,7 +100,7 @@ def run_loadgame(b):
 def run_savegame(b):
 
     b = resolve_expr(b)
-    bmp = load_bmp(convert_path(b))
+    bmp = load_bmp(b)
     state.save_game = (bmp, 0, 0)
 
     state.screen.blit(bmp, [0, 0])
@@ -95,7 +114,7 @@ def run_dossierchgsheet(b, n, x, y):
     y = resolve_expr(y)
     x, y = scale_point(x,y) 
  
-    bmp = load_bmp(convert_path(b))
+    bmp = load_bmp(b)
 
     if n == 1:
         state.dossier_next_sheet = (bmp, x, y)
@@ -112,7 +131,7 @@ def run_dossiernextsuspect(b, x, y):
     y = resolve_expr(y)
     x, y = scale_point(x,y) 
  
-    bmp = load_bmp(convert_path(b))
+    bmp = load_bmp(b)
     state.dossier_next_suspect = (bmp, x, y)
 
     state.screen.blit(bmp, [x, y])
@@ -125,7 +144,7 @@ def run_dossierprevsuspect(b, x, y):
     y = resolve_expr(y)
     x, y = scale_point(x,y) 
  
-    bmp = load_bmp(convert_path(b)) 
+    bmp = load_bmp(b) 
     state.dossier_previous_suspect = (bmp, x, y)
 
     state.screen.blit(bmp, [x, y])
@@ -150,10 +169,10 @@ def run_dossieradd(b1, b2):
     b1 = resolve_expr(b1)
     b2 = resolve_expr(b2)
  
-    b1 = convert_path(b1)  
+    #b1 = convert_path(b1)  
 
     if b2 != '""':
-        b2 = convert_path(b2) 
+        pass #b2 = convert_path(b2) 
     else:
         b2 = None
 
@@ -173,7 +192,7 @@ def run_bitmap(e, x, y):
 
     v = resolve_expr(e)
     print("bitmap", v, x, y, state.screen)
-    bmp = load_bmp(convert_path(v))
+    bmp = load_bmp(v)
 
     if state.mode == 1:
         x,y = state.gorigin
@@ -243,11 +262,6 @@ def run_exit(e, x, r):
     state.exits.append((a, b, c, d, e, x))
     print("exit", e, r)
 
-def convert_path(p):
-    p = p.lower()
-    p = p.replace('"','')
-    return p.replace("\\","/")
-
 def run_transition(v, e):
 
     v = resolve_expr(v)
@@ -259,7 +273,7 @@ def run_transition(v, e):
 
     print("play", v)
     if (v != '""'):
-        state.video_to_play = (join(state.cdrom_path, convert_path(v)), e)
+        state.video_to_play = (v, e)
     else:
         assert(state.next_setting is None)
         state.next_setting = e 
@@ -346,17 +360,17 @@ def run_fcall(fc):
     # clips
 
     elif (name == "PoliceClip"):
-        pass
+        add_sound(get_param(fc.children[1]), "kPoliceRadio")
 
     elif (name == "AMRadioClip"):
-        pass
+        add_sound(get_param(fc.children[1]), "kAMRadio")
 
     elif (name == "PhoneClip"):
-        pass
+        add_sound(get_param(fc.children[1]), "kPhone")
 
     elif (name == "SoundArea"):
         assert(len(fc.children) == 4)  # 3 parameters
-        run_mask(get_param(fc.children[1]), 0, get_param(fc.children[3]), 0, 0, True)
+        run_soundarea(get_param(fc.children[1]), get_param(fc.children[2]))
 
     elif (name == "ViewScreen"):
         assert(len(fc.children) == 3)  # 2 parameters
@@ -425,6 +439,15 @@ def run_fcall(fc):
         print("DossierNextSuspect")
         run_dossiernextsuspect(get_param(fc.children[1]), get_param(fc.children[2]), get_param(fc.children[3])) 
 
+    elif (name == "DiaryLocList"):
+        print("DiaryLocList (skip)")
+ 
+    elif (name == "DiaryGoLoc"):
+        print("DiaryGoLoc (skip)")
+ 
+    elif (name == "DiaryInvList"):
+        print("DiaryInvList (skip)")
+    
     elif (name == "AskSave"): 
         assert(len(fc.children) == 3) # 2 parameters
         print("AskSave")
@@ -449,22 +472,36 @@ def run_fcall(fc):
     else:
         raise SyntaxError('I don\'t know how to exec: %s' % fc)
 
-def run_inventory(b1, v1, v2, e, b2, a, b, c, snd):
+def run_inventory(b1, v1, v2, e, b2, cmd, b, c, snd):
 
-    [b1, v1, v2, e, b2, snd] = resolve_all([b1, v1, v2, e, b2, snd])
-    print("inventory", b1, v1, v2, e, b2, snd) 
+    [b1, v1, v2, e, b2, cmd, snd] = resolve_all([b1, v1, v2, e, b2, cmd, snd])
+    print("inventory", b1, v1, v2, e, b2, cmd, snd) 
+
+    if cmd != '""':
+        print("I don't know how to execute", cmd)
+        assert(False)
+
+
     if v1 != '""':
         run_setflag(v1, "TRUE")
 
-    if v2 != '""':
-        run_setflag(v2, "TRUE")
+    #if v2 != '""':
+    #    run_setflag(v2, "TRUE")
 
-    state.inventory.append((convert_path(b1),convert_path(b2)))
+    if b1 != '""': 
+        bmp = load_bmp(b1)
+        x,y = state.gorigin 
+        state.screen.blit(bmp, [x, y])
+        pygame.display.flip()
+        state.masks.append((bmp, x, y, e, v2, "kInventory"))
+ 
+    state.inventory.append((b1, v1, v2, e, b2))
+    play_sound(snd, 0)
 
-    if snd != '""':
-        pygame.mixer.stop()
-        sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(snd)))
-        sound.play()
+    #if snd != '""':
+    #    pygame.mixer.stop()
+    #    sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(snd)))
+    #    sound.play()
 
 def run_ifelse(ie):
     assert(ie.data == "ifelse")

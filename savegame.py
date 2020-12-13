@@ -22,6 +22,7 @@ def savegame():
         game = dict()
         game['variables'] = state.definitions['variables']
         game['inventory'] = state.inventory
+        game['sounds'] = state.sounds
         game['dossiers'] = state.dossiers
         game['dossier_current_sheet'] = state.dossier_current_sheet
         game['dossier_current_suspect'] = state.dossier_current_suspect
@@ -56,6 +57,7 @@ def loadgame():
     with open(path, "r") as fp:
         game = json.load(fp)
         state.definitions['variables'] = game['variables']
+        state.sounds = game['sounds']  
         state.inventory = game['inventory'] 
         state.dossiers = game['dossiers']
         state.dossier_current_sheet = game['dossier_current_sheet']

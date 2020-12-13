@@ -6,7 +6,7 @@ This open-source project aims to be a modern engine re-implementation for ["Priv
 
 This project is open for collaboration. If you are interested, please open [an issue](https://github.com/neuromancer/re-private-eye/issues) about it.
 
-**Only the English version of the game is supported**. Localized versions (e.g. Spanish, French, etc) have game assets in a binarized format that it is not so easy to parse. However, if you own the English version and some localized version, you can still play installing the english one but then using the CD with your localized version. 
+**Only the English version of the game is supported**. Localized versions (e.g. Spanish, French, etc) have game assets in a binarized format that it is not so easy to parse. However, if you own the English version and some localized version, you can still play installing the english one but then using the CD of your localized version. 
 
 ## Current status
 
@@ -14,7 +14,12 @@ Somehow playable: at least the first scenes can be played, but (most likely) the
 
 * Inventory
 * Diary
-* Radios
+* Phone
+
+Also, less important, but not implemented yet:
+
+* Demo mode
+* Original savegame interface and retro-compatibility
 
 Finally, this re-implementation adds the following new features:
 
