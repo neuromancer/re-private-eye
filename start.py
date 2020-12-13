@@ -3,6 +3,7 @@ from sys import exit, argv
 from time import sleep
 from pathlib import Path
 from random import choice
+from argparse import ArgumentParser
 
 import pygame 
 
@@ -348,18 +349,20 @@ def check_for_events():
 
 if __name__ == '__main__':
 
-    if (len(argv) == 2):
-        state.cdrom_path = argv[1]
-    else:
-        print("A path to the CDROM files is required")
-        exit(-1)
+    # Arguments
+    parser = ArgumentParser(description='re-private-eye')
+    parser.add_argument("CDROM", help="Path to CDROM", type=str) 
+    parser.add_argument("-height", help="Screen height", type=int, default=1024)
+    parser.add_argument("-width", help="Screen height", type=int, default=768)
+
+    options = parser.parse_args()
+    state.height, state.width = options.height, options.width
+    state.cdrom_path = options.CDROM
 
     if not isdir(state.cdrom_path):
         print(state.cdrom_path, "does not exists")
         exit(-1)
 
-   
-    #assert(0)
     pygame.init()
     pygame.font.init() # you have to call this at the start, 
     state.font = pygame.font.SysFont(pygame.font.get_default_font(), 70)

@@ -47,8 +47,8 @@ save_name = "re-private-eye-game.json"
 
 # Media
 
-height = 1024
-width = 768
+height = None
+width = None
 cdrom_path = None 
 video_to_play = None
 sound_to_play = None
