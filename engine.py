@@ -76,17 +76,27 @@ def run_soundarea(m, s):
     state.screen.blit(bmp, [0, 0])
     pygame.display.flip()
 
-def add_sound(s, t):
+def add_sound(s, t, v, x):
+
+    if v is not None:
+        v = resolve_expr(v)
+
+    if x is not None:
+        x = resolve_expr(x)
+       
 
     if t not in state.sounds:
-        state.sounds[t] = []
+        state.sounds[t] = dict()
 
     s = resolve_expr(s).replace('"','')
     if s == '':
+        assert(x is None and v is None)
         return
     s = s + ".wav" 
     print("add_sound", s, t)
-    state.sounds[t].append(s)
+    #if s not in state.sounds[t]:
+    if s not in state.played:
+        state.sounds[t][s] = (v, x)
 
 def run_loadgame(b):
 
@@ -360,13 +370,20 @@ def run_fcall(fc):
     # clips
 
     elif (name == "PoliceClip"):
-        add_sound(get_param(fc.children[1]), "kPoliceRadio")
+        add_sound(get_param(fc.children[1]), "kPoliceRadio", None, None)
 
     elif (name == "AMRadioClip"):
-        add_sound(get_param(fc.children[1]), "kAMRadio")
+        add_sound(get_param(fc.children[1]), "kAMRadio", None, None)
 
     elif (name == "PhoneClip"):
-        add_sound(get_param(fc.children[1]), "kPhone")
+
+        v = None
+        x = None 
+        if len(fc.children) == 7:
+            v = get_param(fc.children[5])
+            x = get_param(fc.children[6])
+ 
+        add_sound(get_param(fc.children[1]), "kPhone", v, x)
 
     elif (name == "SoundArea"):
         assert(len(fc.children) == 4)  # 3 parameters
@@ -472,14 +489,22 @@ def run_fcall(fc):
     else:
         raise SyntaxError('I don\'t know how to exec: %s' % fc)
 
-def run_inventory(b1, v1, v2, e, b2, cmd, b, c, snd):
+def run_inventory(b1, v1, v2, e, b2, x, b, c, snd):
 
-    [b1, v1, v2, e, b2, cmd, snd] = resolve_all([b1, v1, v2, e, b2, cmd, snd])
-    print("inventory", b1, v1, v2, e, b2, cmd, snd) 
+    [b1, v1, v2, e, b2, x, snd] = resolve_all([b1, v1, v2, e, b2, x, snd])
+    print("inventory", b1, v1, v2, e, b2, x, snd) 
 
-    if cmd != '""':
-        print("I don't know how to execute", cmd)
-        assert(False)
+    if x == '"REMOVE"':
+        found = False
+        print(b2)
+        for i,(_ , _, _, _, bi) in enumerate(state.inventory):
+            print(bi)
+            if bi == b2:
+                found = True
+                state.inventory.pop(i)
+                break
+
+        assert(found)
 
 
     if v1 != '""':

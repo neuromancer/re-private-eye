@@ -9,7 +9,7 @@ import pygame
 
 import state
 
-from media import play_video, play_sound, load_bmp, scale_point
+from media import play_video, play_sound, is_sound_playing, load_bmp, scale_point
 from savegame import savegame, loadgame
 from parser import game_parser
 from compiler import compile_lines
@@ -126,6 +126,13 @@ def set_cursor(x, y):
 
 
 def check_for_events():
+    # incoming phone call
+    if state.mode == 0 and "kPhone" in state.sounds and len(state.sounds["kPhone"]) > 0:
+        filename = state.phone_path + state.phone_sound
+        if (not is_sound_playing()):
+            play_sound(filename, 0) 
+ 
+
     (x,y) = pygame.mouse.get_pos()
     set_cursor(x,y)
 
@@ -186,15 +193,34 @@ def check_for_events():
                 print("sound area", mask.get_at((xm, ym)))
                 if mask.get_at((xm, ym)) == 1:
                     if s == "kPoliceRadio":
-                        s = choice(state.sounds["kPoliceRadio"])
-                        filename = state.police_radio_path + s
-                        play_sound(filename, 0) 
+                        ss = list(state.sounds["kPoliceRadio"].items())
+                        if len(ss) > 0:
+                            (s, _) = choice(list(state.sounds["kPoliceRadio"].items()))
+                            filename = state.police_radio_path + s
+                            play_sound(filename, 0) 
+
                     elif s == "kAMRadio":
-                        s = choice(state.sounds["kAMRadio"])
-                        filename = state.am_radio_path + s
-                        play_sound(filename, 0)
+                        ss = list(state.sounds["kAMRadio"].items())
+                        if len(ss) > 0:
+                            (s, _) = choice(list(state.sounds["kAMRadio"].items()))
+                            filename = state.am_radio_path + s
+                            play_sound(filename, 0)
+                            del state.sounds["kAMRadio"][s] 
+
                     elif s == "kPhone":
-                        pass
+                        ss = list(state.sounds["kPhone"].items())
+                        if len(ss) > 0:
+                            (s, (v, x)) = choice(list(state.sounds["kPhone"].items()))
+                            filename = state.phone_path + s
+                            play_sound(filename, 0)
+                            if v != "NULL" and v != 0:
+                                assert(v in state.definitions['variables'])
+                                run_setflag(v, x)
+
+                            state.played.append(s)
+
+                            del state.sounds["kPhone"][s]
+ 
                     else:
                         print("Invalid sound added")
                         assert(False)

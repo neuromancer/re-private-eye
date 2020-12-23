@@ -30,8 +30,9 @@ sareas = []
 sounds = dict()
 police_radio_path =  "inface/radio/police/"
 am_radio_path =  "inface/radio/comm_/"
-phone_path =  "inface/telephone/"
+phone_path =  "inface/telephon/"
 phone_sound = "phone.wav" 
+played = []
 
 # Settings
 

@@ -19,6 +19,8 @@ def load_bmp(b):
     bmp = pygame.image.load(join(state.cdrom_path, convert_path(b)))
     bmp.set_colorkey((0, 255, 0))
     h,w = bmp.get_size() 
+    bmp = pygame.transform.scale2x(bmp)
+    
     if (h,w) == (640, 480):
         bmp = pygame.transform.scale(bmp, (state.height, state.width))
     else:
@@ -49,6 +51,9 @@ def play_video(filename, check_for_events):
 
         # Flip the display
         pygame.display.flip()
+
+def is_sound_playing():
+    return pygame.mixer.get_busy()
 
 def play_sound(f, l):
     print("playing", f)

@@ -14,7 +14,6 @@ Somehow playable: at least the first scenes can be played, but (most likely) the
 
 * Inventory
 * Diary
-* Phone
 
 Also, less important, but not implemented yet:
 
@@ -23,8 +22,8 @@ Also, less important, but not implemented yet:
 
 Finally, this re-implementation adds the following new features:
 
-* Crossplatform support!
-* Any screen resolution (not only 640x480 as the original implementation).
+* Crossplatform support! 
+* Any screen resolution with scale2x (not only 640x480 as the original implementation).
 
 ### Project dependencies
 - Python 3
