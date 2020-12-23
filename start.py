@@ -197,8 +197,11 @@ def check_for_events():
                         if len(ss) > 0:
                             (s, _) = choice(list(state.sounds["kPoliceRadio"].items()))
                             filename = state.police_radio_path + s
-                            play_sound(filename, 0) 
+                            play_sound(filename, 0)
 
+                            state.played_sounds.append(s)
+                            del state.sounds["kPoliceRadio"][s]
+ 
                     elif s == "kAMRadio":
                         ss = list(state.sounds["kAMRadio"].items())
                         if len(ss) > 0:
@@ -217,8 +220,7 @@ def check_for_events():
                                 assert(v in state.definitions['variables'])
                                 run_setflag(v, x)
 
-                            state.played.append(s)
-
+                            state.played_sounds.append(s)
                             del state.sounds["kPhone"][s]
  
                     else:

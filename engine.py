@@ -95,7 +95,7 @@ def add_sound(s, t, v, x):
     s = s + ".wav" 
     print("add_sound", s, t)
     #if s not in state.sounds[t]:
-    if s not in state.played:
+    if s not in state.played_sounds:
         state.sounds[t][s] = (v, x)
 
 def run_loadgame(b):
@@ -281,12 +281,36 @@ def run_transition(v, e):
         state.current_view_frame = load_bmp(state.game_frame)
         state.screen.blit(state.current_view_frame, [0, 0])
 
-    print("play", v)
+    print("play transition", v)
     if (v != '""'):
         state.video_to_play = (v, e)
     else:
         assert(state.next_setting is None)
         state.next_setting = e 
+
+def run_movie(v, e):
+
+    v = resolve_expr(v)
+    e = resolve_expr(e)
+
+    if state.mode == 1:
+        state.current_view_frame = load_bmp(state.game_frame)
+        state.screen.blit(state.current_view_frame, [0, 0])
+
+    print("play movie", v)
+
+    if (v != '""' and v not in state.played_movies):
+        state.video_to_play = (v, e)
+        state.played_movies.append(v)
+    elif (v == '""'):
+        state.repeated_movie_exit = e
+        assert(state.next_setting is None)
+        state.next_setting = e 
+    else:
+        print("movie", v, "already played")
+        state.next_setting = state.repeated_movie_exit 
+ 
+
 
 def run_fcall(fc):
     #print(fc.children)
@@ -413,8 +437,8 @@ def run_fcall(fc):
 
     elif (name == "Movie"):
         assert(len(fc.children) == 3)  # 2 parameter
-        print("Movie (transition?)")
-        run_transition(get_param(fc.children[1]), get_param(fc.children[2]))
+        print("Movie")
+        run_movie(get_param(fc.children[1]), get_param(fc.children[2]))
         #run_goto(get_param(fc.children[2]))
  
     elif (name == "Quit"): 
@@ -489,16 +513,14 @@ def run_fcall(fc):
     else:
         raise SyntaxError('I don\'t know how to exec: %s' % fc)
 
-def run_inventory(b1, v1, v2, e, b2, x, b, c, snd):
+def run_inventory(b1, v1, v2, e, b2, b3, b, c, snd):
 
-    [b1, v1, v2, e, b2, x, snd] = resolve_all([b1, v1, v2, e, b2, x, snd])
-    print("inventory", b1, v1, v2, e, b2, x, snd) 
+    [b1, v1, v2, e, b2, b3, snd] = resolve_all([b1, v1, v2, e, b2, b3, snd])
+    print("inventory", b1, v1, v2, e, b2, b3, snd) 
 
-    if x == '"REMOVE"':
+    if b3 == '"REMOVE"':
         found = False
-        print(b2)
         for i,(_ , _, _, _, bi) in enumerate(state.inventory):
-            print(bi)
             if bi == b2:
                 found = True
                 state.inventory.pop(i)
@@ -506,12 +528,8 @@ def run_inventory(b1, v1, v2, e, b2, x, b, c, snd):
 
         assert(found)
 
-
     if v1 != '""':
         run_setflag(v1, "TRUE")
-
-    #if v2 != '""':
-    #    run_setflag(v2, "TRUE")
 
     if b1 != '""': 
         bmp = load_bmp(b1)
@@ -520,13 +538,9 @@ def run_inventory(b1, v1, v2, e, b2, x, b, c, snd):
         pygame.display.flip()
         state.masks.append((bmp, x, y, e, v2, "kInventory"))
  
-    state.inventory.append((b1, v1, v2, e, b2))
-    play_sound(snd, 0)
-
-    #if snd != '""':
-    #    pygame.mixer.stop()
-    #    sound = pygame.mixer.Sound(join(state.cdrom_path, convert_path(snd)))
-    #    sound.play()
+    state.inventory.append((b1, v1, v2, e, b2, b3))
+    if snd != '""':
+        play_sound(snd, 0)
 
 def run_ifelse(ie):
     assert(ie.data == "ifelse")

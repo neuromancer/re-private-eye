@@ -23,7 +23,9 @@ def savegame():
         game['variables'] = state.definitions['variables']
         game['inventory'] = state.inventory
         game['sounds'] = state.sounds
-        game['played'] = state.played
+        game['played_sounds'] = state.played_sounds
+        game['played_movies'] = state.played_movies 
+        game['repeated_movie_exit'] = state.repeated_movie_exit
         game['dossiers'] = state.dossiers
         game['dossier_current_sheet'] = state.dossier_current_sheet
         game['dossier_current_suspect'] = state.dossier_current_suspect
@@ -59,7 +61,9 @@ def loadgame():
         game = json.load(fp)
         state.definitions['variables'] = game['variables']
         state.sounds = game['sounds']  
-        state.played = game['played']  
+        state.played_sounds = game['played_sounds']
+        state.played_movies = game['played_movies']
+        state.repeated_movie_exit = game['repeated_movie_exit']
         state.inventory = game['inventory'] 
         state.dossiers = game['dossiers']
         state.dossier_current_sheet = game['dossier_current_sheet']

@@ -32,7 +32,13 @@ police_radio_path =  "inface/radio/police/"
 am_radio_path =  "inface/radio/comm_/"
 phone_path =  "inface/telephon/"
 phone_sound = "phone.wav" 
-played = []
+played_sounds = []
+
+# Movies
+
+video_to_play = None
+played_movies = []
+movie_repeated_exit = None
 
 # Settings
 
@@ -51,8 +57,6 @@ save_name = "re-private-eye-game.json"
 height = None
 width = None
 cdrom_path = None 
-video_to_play = None
-sound_to_play = None
 screen = None
 font = None
 current_view_frame = None
