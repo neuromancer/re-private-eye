@@ -1,5 +1,7 @@
 # re-private-eye
 
+**The development of this re-implementation was moved to [this scummvm branch](https://github.com/neuromancer/scummvm/tree/private). The Python version won't be updated.**
+
 <a href="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-1.png"><img src="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-1.png" width="150"/></a> <a href="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-2.png"><img src="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-2.png" width="150"/></a> <a href="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-3.png"><img src="https://raw.githubusercontent.com/neuromancer/re-private-eye/main/screen-3.png" width="150"/></a>
 
 This open-source project aims to be a modern engine re-implementation for ["Private Eye"](https://www.mobygames.com/game/private-eye) from 1996 by Brooklyn Multimedia. The first iteration is written in Python and uses pygame and SDL2. It should run in Windows, Linux, and MacOS.
